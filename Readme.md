@@ -39,7 +39,7 @@ Proyecto de visualización de grafos usando **Streamlit** y **Pyvis**.
 Para correr la aplicación:
 
 ```bash
-streamlit run main.py
+python -m streamlit run main.py
 ```
 
 Esto abrirá la app en tu navegador, normalmente en `http://localhost:8501`.
