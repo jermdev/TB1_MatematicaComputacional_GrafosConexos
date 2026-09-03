@@ -1,0 +1,34 @@
+#Entornos virtuales
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+.streamlit/secrets.toml
+# Pyvis (genera HTML temporales al renderizar grafos)
+*.html
+!templates/*.html  # descomenta y ajusta si tienes HTML que SÍ quieres versionar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+
+*.log
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
