@@ -1,11 +1,12 @@
 import streamlit as st
 
+#implementar los metodos para el control de interface de usuario
 
 def render_controles(paso_atras: callable, paso_adelante: callable):
     st.subheader("Controles")
 
     with st.container(border=True):
-            st.markdown("**Datos del grafo**")
+            st.markdown("**CHA   del grafo**")
             num_vertices = st.number_input("Número de vértices", min_value=1, step=1)
     
             st.markdown("**Modo de generación**")

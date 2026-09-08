@@ -3,7 +3,6 @@ from UI.components.controles import render_controles
 from UI.components.grafo_canva import grafo_canva
 from UI.components.progreso_pasos import progreso_pasos
 
-st.set_page_config(layout="wide", page_title="Simulador de Grafos")
 
 def paso_atras():
     if st.session_state["paso_actual"] > 0:
@@ -15,6 +14,7 @@ def paso_adelante():
         st.session_state["paso_actual"] += 1
 
 def render():
+    st.set_page_config(layout="wide",   page_title="Simulador de Grafos")
     # ---------- ESTADO INICIAL ----------
     if "pasos" not in st.session_state:
         st.session_state["pasos"] = [
