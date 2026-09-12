@@ -35,24 +35,3 @@ class Grafo:
 
     def get_lista_adyacencia(self) -> dict[str, list[str]]:
         return self._adyacencia
-
-    def get_matriz(self) -> list[list[int]]:
-        vertices = self.vertices
-        ids = [vertice.id for vertice in vertices]
-        posiciones = {vertice_id: indice for indice, vertice_id in enumerate(ids)}
-
-        matriz = [
-            [0 for _ in ids]
-            for _ in ids
-        ]
-
-        for arista in self.aristas:
-            origen = posiciones[arista.origen]
-            destino = posiciones[arista.destino]
-
-            matriz[origen][destino] = 1
-
-            if not (arista.dirigida or self.dirigido):
-                matriz[destino][origen] = 1
-
-        return matriz
