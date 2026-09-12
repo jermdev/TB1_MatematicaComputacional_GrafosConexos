@@ -2,7 +2,7 @@ import streamlit as st
 from UI.components.controles import render_controles
 from UI.components.grafo_canva import grafo_canva
 from UI.components.progreso_pasos import progreso_pasos
-
+from service.generador_grafo_service import crear_grafo_ejemplo
 
 def paso_atras():
     if st.session_state["paso_actual"] > 0:
@@ -37,7 +37,8 @@ def render():
 
     # ================= COLUMNA CENTRAL: VISUALIZACION DEL GRAFO =================
     with col_grafo:
-        grafo_canva()
+        grafo = crear_grafo_ejemplo()
+        grafo_canva(grafo, vista="matriz")
 
     # ================= COLUMNA DERECHA: CONTROLES =================
     with col_controles:
