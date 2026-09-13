@@ -43,6 +43,10 @@ def grafo_canva(grafo: Grafo, vista="matriz"):
 
 def mostrar_matriz(grafo: Grafo):
     matriz = grafo.get_matriz()
+    ids = [vertice.id for vertice in grafo.vertices]
+
+    df = pd.DataFrame(matriz, index=ids, columns=ids)
+    st.dataframe(df, use_container_width=True)
 
 def mostrar_grafo(grafo: Grafo):
     net = pv.network.Network(directed=grafo.dirigido)
