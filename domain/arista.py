@@ -7,7 +7,7 @@ class Arista:
         self._destino = destion
         self._peso = peso
         self._dirigida = dirigida
-        self._atributos = dict[str, Any] = {}
+        self._atributos: dict[str, Any] = {}
 
     @property
     def origen(self):

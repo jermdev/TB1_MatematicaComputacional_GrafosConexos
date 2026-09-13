@@ -4,7 +4,7 @@ class Vertice:
     def __init__(self, id: str, etiqueta: str = ""):
         self._id = id
         self._etiqueta = etiqueta
-        self._atributos = dict[str, Any] = {}
+        self._atributos: dict[str, Any] = {}
 
     def __hash__(self):
         return hash(self.id)
