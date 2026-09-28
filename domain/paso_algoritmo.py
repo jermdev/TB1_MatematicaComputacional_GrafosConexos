@@ -18,3 +18,4 @@ class Paso_Algoritmo:
     cola: list = field(default_factory=list)
     visitados: set = field(default_factory=set)
     mensaje : str = ""
+    vecinos_analizados: list[str] = field(default_factory=list)
