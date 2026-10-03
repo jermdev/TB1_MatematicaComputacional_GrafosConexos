@@ -53,22 +53,21 @@ def mostrar_grafo(grafo: Grafo):
 
     for vertice in grafo.vertices:
         etiqueta = vertice.etiqueta or vertice.id
-
-        net.add_node(vertice.id, label=etiqueta)
+        net.add_node(str(vertice.id), label=str(etiqueta))
 
     for arista in grafo.aristas:
         es_dirigida = arista.dirigida or grafo.dirigido
 
         net.add_edge(
-            arista.origen, 
-            arista.destino,
+            str(arista.origen), 
+            str(arista.destino),
             label=str(arista.peso)
             if arista.peso != 1
             else "",
-            arros = "to"
+            arrows="to"
             if es_dirigida
             else ""
-            )
+        )
 
     net.repulsion(node_distance=200, spring_length=200)
-    st.components.v1.html(net.generate_html(), height=600, scrolling=True)
+    st.components.v1.html(net.generate_html(), height=500, scrolling=True)

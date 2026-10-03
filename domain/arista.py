@@ -2,9 +2,9 @@
 from typing import Any
 
 class Arista:
-    def __init__(self, origen: str, destion: str, peso: float = 1.00, dirigida: bool = False):
-        self._origen = origen
-        self._destino = destion
+    def __init__(self, origen: str, destino: str, peso: float = 1.00, dirigida: bool = False):
+        self._origen = str(origen)
+        self._destino = str(destino)
         self._peso = peso
         self._dirigida = dirigida
         self._atributos: dict[str, Any] = {}

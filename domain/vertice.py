@@ -2,8 +2,8 @@ from typing import Any
 
 class Vertice:
     def __init__(self, id: str, etiqueta: str = ""):
-        self._id = id
-        self._etiqueta = etiqueta
+        self._id = str(id)
+        self._etiqueta = str(etiqueta) if etiqueta else str(id)
         self._atributos: dict[str, Any] = {}
 
     def __hash__(self):

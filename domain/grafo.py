@@ -9,18 +9,22 @@ class Grafo:
         self._adyacencia: dict[str, list[str]] = {}
 
     def agregar_vertice(self, vertice: Vertice) -> None:
-        if vertice.id in self._vertices:
-            raise ValueError(f"Vértice {vertice.id} ya existe")
-        self._vertices[vertice.id] = vertice
-        self._adyacencia[vertice.id] = []
+        v_id = str(vertice.id)
+        if v_id in self._vertices:
+            raise ValueError(f"Vértice {v_id} ya existe")
+        self._vertices[v_id] = vertice
+        self._adyacencia[v_id] = []
 
     def agregar_arista(self, arista: Arista) -> None:
-        if arista.origen not in self._vertices or arista.destino not in self._vertices:
-            raise ValueError("Ambos vértices deben existir antes de conectar")
+        origen = str(arista.origen)
+        destino = str(arista.destino)
+        if origen not in self._vertices or destino not in self._vertices:
+            raise ValueError(f"Ambos vértices ({origen}, {destino}) deben existir antes de conectar")
         self._aristas.append(arista)
-        self._adyacencia[arista.origen].append(arista.destino)
+        self._adyacencia[origen].append(destino)
         if not (arista.dirigida or self.dirigido):
-            self._adyacencia[arista.destino].append(arista.origen)
+            if origen != destino:
+                self._adyacencia[destino].append(origen)
 
     @property
     def vertices(self) -> list[Vertice]:
@@ -31,7 +35,7 @@ class Grafo:
         return list(self._aristas)
 
     def vecinos(self, vertice_id: str) -> list[str]:
-        return self._adyacencia.get(vertice_id, [])
+        return self._adyacencia.get(str(vertice_id), [])
 
     def get_lista_adyacencia(self) -> dict[str, list[str]]:
         return self._adyacencia
@@ -47,12 +51,13 @@ class Grafo:
         ]
 
         for arista in self.aristas:
-            origen = posiciones[arista.origen]
-            destino = posiciones[arista.destino]
+            origen = posiciones.get(str(arista.origen))
+            destino = posiciones.get(str(arista.destino))
 
-            matriz[origen][destino] = 1
+            if origen is not None and destino is not None:
+                matriz[origen][destino] = 1
 
-            if not (arista.dirigida or self.dirigido):
-                matriz[destino][origen] = 1
+                if not (arista.dirigida or self.dirigido):
+                    matriz[destino][origen] = 1
 
         return matriz
