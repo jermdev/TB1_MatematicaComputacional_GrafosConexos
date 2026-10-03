@@ -101,7 +101,7 @@ def mostrar_grafo(grafo: Grafo, modo_manual: bool = False):
         "damping": 0.4,
     },
     "stabilization": {"iterations": 200}, # Da más tiempo para que el grafo se acomode antes de mostrarse
-}
+},
         "interaction": {
             "hover": True,
             "navigationButtons": True,
