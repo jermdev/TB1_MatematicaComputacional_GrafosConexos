@@ -90,18 +90,18 @@ def mostrar_grafo(grafo: Grafo, modo_manual: bool = False):
             "smooth": {"type": "continuous"},
             "width": 2.5,
         },
-        "physics": {
-            "enabled": True,
-            "solver": "forceAtlas2Based",
-            "forceAtlas2Based": {
-                "gravitationalConstant": -45,
-                "centralGravity": 0.01,
-                "springLength": 120,
-                "springConstant": 0.07,
-                "damping": 0.4,
-            },
-            "stabilization": {"iterations": 100},
-        },
+"physics": {
+    "enabled": True,
+    "solver": "forceAtlas2Based",
+    "forceAtlas2Based": {
+        "gravitationalConstant": -150,  # Aumenta la repulsión fuertemente (antes estaba en -45)
+        "centralGravity": 0.01,
+        "springLength": 250,           # Alarga las aristas para separar los nodos (antes 120)
+        "springConstant": 0.05,        # Hace las aristas un poco más flexibles
+        "damping": 0.4,
+    },
+    "stabilization": {"iterations": 200}, # Da más tiempo para que el grafo se acomode antes de mostrarse
+}
         "interaction": {
             "hover": True,
             "navigationButtons": True,
