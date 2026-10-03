@@ -1,3 +1,5 @@
+from algorithms.dfs import DFS
+from algorithms.bfs import BFS
 from domain.arista import Arista
 from domain.grafo import Grafo
 from domain.vertice import Vertice
@@ -21,10 +23,12 @@ class GrafoOrquestador:
         self.num_vertices: int = 4
         self.algoritmo_seleccionado: str = "DFS"
         self.vista_actual: str = "grafo"  # 'grafo' o 'matriz'
-        self.pasos: list[str] = [
+        self.pasos: list = [
             "Sistema iniciado: Grafo base listo.",
             "Selecciona la configuración y presiona 'Generar grafo' para comenzar.",
         ]
+        self.pasos_algoritmo: list = []
+        self.componentes_conexas: list[list[str]] = []
         self.paso_actual: int = 0
         self.ultimo_mensaje: str = ""
 
@@ -50,11 +54,6 @@ class GrafoOrquestador:
                 dirigido=dirigido,
             )
             total_aristas = len(self.grafo.aristas)
-            self.pasos = [
-                f"Paso 1: Generación automática completada con {self.num_vertices} vértices y {total_aristas} aristas.",
-                f"Paso 2: Algoritmo configurado para análisis: {algoritmo}.",
-                "Paso 3: Grafo listo para iniciar el recorrido de componentes conexas.",
-            ]
             self.ultimo_mensaje = f"Grafo automático generado ({self.num_vertices} vértices, {total_aristas} aristas)."
         else:
             # Modo manual: se crean los vértices limpios para conectar
@@ -62,12 +61,47 @@ class GrafoOrquestador:
                 num_vertices=self.num_vertices,
                 dirigido=dirigido,
             )
-            self.pasos = [
-                f"Paso 1: Vértices inicializados ({self.num_vertices}) para modo manual.",
-                "Paso 2: Conecta vértices usando los selectores o interactuando en el canvas.",
-                f"Paso 3: Algoritmo seleccionado: {algoritmo}.",
-            ]
             self.ultimo_mensaje = f"Modo manual activado con {self.num_vertices} vértices. Agrega aristas."
+
+        if algoritmo == "DFS":
+            algoritmo_obj = DFS()
+            algoritmo_obj.ejecutar(self.grafo)
+            self.pasos_algoritmo = algoritmo_obj.pasos
+            self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
+            self.pasos = algoritmo_obj.pasos
+            self.ultimo_mensaje = (
+                f"DFS ejecutado sobre el grafo. Se registraron {len(self.pasos)} pasos del recorrido."
+            )
+        elif algoritmo == "BFS":
+            self.pasos_algoritmo = []
+            self.componentes_conexas = []
+            self.pasos = [
+                "BFS aún no está implementado en esta etapa del proyecto.",
+                "Se mantiene como placeholder para una futura versión.",
+            ]
+            self.ultimo_mensaje = "BFS preparado como placeholder. La lógica del algoritmo se implementará más adelante."
+        else:
+            self.pasos_algoritmo = []
+            self.componentes_conexas = []
+            self.pasos = [
+                f"Paso 1: Generación completada con {self.num_vertices} vértices.",
+                f"Paso 2: Algoritmo configurado para análisis: {algoritmo}.",
+                "Paso 3: Grafo listo para iniciar el recorrido de componentes conexas.",
+            ]
+
+        if algoritmo != "DFS":
+            if modo == "Automático":
+                self.pasos = [
+                    f"Paso 1: Generación automática completada con {self.num_vertices} vértices y {len(self.grafo.aristas)} aristas.",
+                    f"Paso 2: Algoritmo configurado para análisis: {algoritmo}.",
+                    "Paso 3: Grafo listo para iniciar el recorrido de componentes conexas.",
+                ]
+            else:
+                self.pasos = [
+                    f"Paso 1: Vértices inicializados ({self.num_vertices}) para modo manual.",
+                    "Paso 2: Conecta vértices usando los selectores o interactuando en el canvas.",
+                    f"Paso 3: Algoritmo seleccionado: {algoritmo}.",
+                ]
 
         self.paso_actual = 0
         return self.grafo

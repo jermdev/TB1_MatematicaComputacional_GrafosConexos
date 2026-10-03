@@ -102,4 +102,7 @@ def render():
             grafo=orquestador.obtener_grafo(),
             vista=orquestador.vista_actual,
             modo_manual=(orquestador.modo == "Manual"),
+            paso_actual=orquestador.paso_actual,
+            pasos_algoritmo=getattr(orquestador, "pasos_algoritmo", []),
+            componentes_conexas=getattr(orquestador, "componentes_conexas", []),
         )
