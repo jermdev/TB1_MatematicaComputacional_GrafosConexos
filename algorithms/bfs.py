@@ -36,6 +36,8 @@ class BFS(AlgoritmoConectividadGrafo):
         self.componentes = []
         visitados: set[str] = set()
 
+        etiq = lambda vid: grafo.obtener_etiqueta(vid) if hasattr(grafo, "obtener_etiqueta") else str(vid)
+
         for vertice in grafo.vertices:
             raiz = vertice.id
             if raiz in visitados:
@@ -58,10 +60,14 @@ class BFS(AlgoritmoConectividadGrafo):
                         cola.append(vecino)
                         nuevos_vecinos.append(vecino)
 
-                vecinos_texto = ", ".join(vecinos_analizados) or "ninguno"
-                mensaje = f"Se analiza {nodo}; se revisan sus vecinos: {vecinos_texto}."
-                if nuevos_vecinos:
-                    mensaje += f" Se agregan a la cola: {', '.join(nuevos_vecinos)}."
+                nodo_lbl = etiq(nodo)
+                vecinos_lbl = [etiq(v) for v in vecinos_analizados]
+                nuevos_lbl = [etiq(v) for v in nuevos_vecinos]
+
+                vecinos_texto = ", ".join(vecinos_lbl) or "ninguno"
+                mensaje = f"Se analiza {nodo_lbl}; se revisan sus vecinos: {vecinos_texto}."
+                if nuevos_lbl:
+                    mensaje += f" Se agregan a la cola: {', '.join(nuevos_lbl)}."
                 self._guardar_paso(
                     Tipo_Paso.VISITAR_NODO,
                     visitados,

@@ -51,6 +51,12 @@ def render():
         if datos_controles["modo"] != orquestador.modo:
             orquestador.cambiar_modo(datos_controles["modo"])
 
+        # Sincronización de algoritmo si el usuario lo cambió en los controles
+        if datos_controles["algoritmo"] != orquestador.algoritmo_seleccionado:
+            orquestador.algoritmo_seleccionado = datos_controles["algoritmo"]
+            orquestador.actualizar_algoritmo(paso_inicial=0)
+            st.rerun()
+
         # Manejo de la acción: Generar grafo
         if datos_controles["generar"]:
             orquestador.generar_grafo(
@@ -122,4 +128,5 @@ def render():
             paso_actual=orquestador.paso_actual,
             pasos_algoritmo=getattr(orquestador, "pasos_algoritmo", []),
             componentes_conexas=getattr(orquestador, "componentes_conexas", []),
+            grafo_id=getattr(orquestador, "grafo_id", "default"),
         )

@@ -1,3 +1,4 @@
+import uuid
 from algorithms.dfs import DFS
 from algorithms.bfs import BFS
 from domain.arista import Arista
@@ -17,20 +18,20 @@ class GrafoOrquestador:
     """
 
     def __init__(self):
+        # Identificador único para el grafo actual (control de persistencia de posiciones)
+        self.grafo_id: str = str(uuid.uuid4())
         # Inicializa con el grafo de ejemplo
         self.grafo: Grafo = crear_grafo_ejemplo()
         self.modo: str = "Automático"
         self.num_vertices: int = 4
         self.algoritmo_seleccionado: str = "DFS"
         self.vista_actual: str = "grafo"  # 'grafo' o 'matriz'
-        self.pasos: list = [
-            "Sistema iniciado: Grafo base listo.",
-            "Selecciona la configuración y presiona 'Generar grafo' para comenzar.",
-        ]
         self.pasos_algoritmo: list = []
         self.componentes_conexas: list[list[str]] = []
+        self.pasos: list = []
         self.paso_actual: int = 0
         self.ultimo_mensaje: str = ""
+        self.actualizar_algoritmo(paso_inicial=0)
 
     def generar_grafo(
         self,
@@ -42,7 +43,10 @@ class GrafoOrquestador:
     ) -> Grafo:
         """
         Genera un nuevo grafo según los parámetros de configuración.
+        El índice de paso se inicializa siempre en el primer paso (paso 0).
+        Se actualiza self.grafo_id para reiniciar la disposición física de los vértices.
         """
+        self.grafo_id = str(uuid.uuid4())
         self.num_vertices = max(1, num_vertices)
         self.modo = modo
         self.algoritmo_seleccionado = algoritmo
@@ -63,47 +67,8 @@ class GrafoOrquestador:
             )
             self.ultimo_mensaje = f"Modo manual activado con {self.num_vertices} vértices. Agrega aristas."
 
-        if algoritmo == "DFS":
-            algoritmo_obj = DFS()
-            algoritmo_obj.ejecutar(self.grafo)
-            self.pasos_algoritmo = algoritmo_obj.pasos
-            self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
-            self.pasos = algoritmo_obj.pasos
-            self.ultimo_mensaje = (
-                f"DFS ejecutado sobre el grafo. Se registraron {len(self.pasos)} pasos del recorrido."
-            )
-        elif algoritmo == "BFS":
-            self.pasos_algoritmo = []
-            self.componentes_conexas = []
-            self.pasos = [
-                "BFS aún no está implementado en esta etapa del proyecto.",
-                "Se mantiene como placeholder para una futura versión.",
-            ]
-            self.ultimo_mensaje = "BFS preparado como placeholder. La lógica del algoritmo se implementará más adelante."
-        else:
-            self.pasos_algoritmo = []
-            self.componentes_conexas = []
-            self.pasos = [
-                f"Paso 1: Generación completada con {self.num_vertices} vértices.",
-                f"Paso 2: Algoritmo configurado para análisis: {algoritmo}.",
-                "Paso 3: Grafo listo para iniciar el recorrido de componentes conexas.",
-            ]
-
-        if algoritmo != "DFS":
-            if modo == "Automático":
-                self.pasos = [
-                    f"Paso 1: Generación automática completada con {self.num_vertices} vértices y {len(self.grafo.aristas)} aristas.",
-                    f"Paso 2: Algoritmo configurado para análisis: {algoritmo}.",
-                    "Paso 3: Grafo listo para iniciar el recorrido de componentes conexas.",
-                ]
-            else:
-                self.pasos = [
-                    f"Paso 1: Vértices inicializados ({self.num_vertices}) para modo manual.",
-                    "Paso 2: Conecta vértices usando los selectores o interactuando en el canvas.",
-                    f"Paso 3: Algoritmo seleccionado: {algoritmo}.",
-                ]
-
-        self.actualizar_algoritmo()
+        self.actualizar_algoritmo(paso_inicial=0)
+        self.paso_actual = 0
         return self.grafo
 
     def cambiar_modo(self, modo: str):
@@ -122,7 +87,7 @@ class GrafoOrquestador:
             return False
         return self.grafo.existe_arista(origen_id, destino_id)
 
-    def actualizar_algoritmo(self):
+    def actualizar_algoritmo(self, paso_inicial: int | None = None):
         """
         Recalcula los pasos del algoritmo y los componentes conexos
         para reflejar el estado actual del grafo.
@@ -136,15 +101,12 @@ class GrafoOrquestador:
             self.pasos_algoritmo = algoritmo_obj.pasos
             self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
             self.pasos = list(algoritmo_obj.pasos)
-            self.paso_actual = max(0, len(self.pasos) - 1)
         elif self.algoritmo_seleccionado == "BFS":
-            self.pasos_algoritmo = []
-            self.componentes_conexas = []
-            self.pasos = [
-                "BFS aún no está implementado en esta etapa del proyecto.",
-                "Se mantiene como placeholder para una futura versión.",
-            ]
-            self.paso_actual = 0
+            algoritmo_obj = BFS()
+            algoritmo_obj.ejecutar(self.grafo)
+            self.pasos_algoritmo = algoritmo_obj.pasos
+            self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
+            self.pasos = list(algoritmo_obj.pasos)
         else:
             self.pasos_algoritmo = []
             self.componentes_conexas = []
@@ -152,7 +114,11 @@ class GrafoOrquestador:
                 f"Grafo con {len(self.grafo.vertices)} vértices y {len(self.grafo.aristas)} aristas.",
                 f"Algoritmo: {self.algoritmo_seleccionado}.",
             ]
-            self.paso_actual = 0
+
+        if paso_inicial is not None:
+            self.paso_actual = paso_inicial
+        else:
+            self.paso_actual = min(getattr(self, "paso_actual", 0), max(0, len(self.pasos) - 1))
 
     def agregar_conexion_manual(
         self,

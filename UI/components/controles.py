@@ -17,8 +17,8 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
         st.markdown("**Configuración del grafo**")
         num_vertices = st.number_input(
             "Número de vértices",
-            min_value=1,
-            max_value=30,
+            min_value=4,
+            max_value=12,
             value=int(num_vert_default),
             step=1,
             key="input_num_vertices",

@@ -12,6 +12,7 @@ def grafo_canva(
     paso_actual: int | None = None,
     pasos_algoritmo: list | None = None,
     componentes_conexas: list[list[str]] | None = None,
+    grafo_id: str = "default",
 ):
     """
     Renderiza la visualización del grafo o su matriz de adyacencia según la vista elegida.
@@ -30,6 +31,7 @@ def grafo_canva(
                 paso_actual=paso_actual,
                 pasos_algoritmo=pasos_algoritmo or [],
                 componentes_conexas=componentes_conexas or [],
+                grafo_id=grafo_id,
             )
         elif vista == "ambos":
             c1, c2 = st.columns(2)
@@ -41,6 +43,7 @@ def grafo_canva(
                     paso_actual=paso_actual,
                     pasos_algoritmo=pasos_algoritmo or [],
                     componentes_conexas=componentes_conexas or [],
+                    grafo_id=grafo_id,
                 )
             with c2:
                 st.markdown("**Matriz de adyacencia**")
@@ -131,6 +134,7 @@ def mostrar_grafo(
     paso_actual: int | None = None,
     pasos_algoritmo: list | None = None,
     componentes_conexas: list[list[str]] | None = None,
+    grafo_id: str = "default",
 ):
     """
     Renderiza el grafo interactivo con Pyvis.
@@ -172,24 +176,25 @@ def mostrar_grafo(
             "smooth": {"type": "continuous"},
             "width": 2.5,
         },
-"physics": {
-    "enabled": True,
-    "solver": "forceAtlas2Based",
-    "forceAtlas2Based": {
-        "gravitationalConstant": -150,  # Aumenta la repulsión fuertemente (antes estaba en -45)
-        "centralGravity": 0.01,
-        "springLength": 250,           # Alarga las aristas para separar los nodos (antes 120)
-        "springConstant": 0.05,        # Hace las aristas un poco más flexibles
-        "damping": 0.4,
-    },
-    "stabilization": {"iterations": 200}, # Da más tiempo para que el grafo se acomode antes de mostrarse
-},
+        "physics": {
+            "enabled": True,
+            "solver": "forceAtlas2Based",
+            "forceAtlas2Based": {
+                "gravitationalConstant": -150,
+                "centralGravity": 0.01,
+                "springLength": 250,
+                "springConstant": 0.05,
+                "damping": 0.4,
+            },
+            "stabilization": {"iterations": 200},
+        },
         "interaction": {
             "hover": True,
             "navigationButtons": True,
             "keyboard": False,
             "zoomView": True,
             "dragView": True,
+            "dragNodes": True,
         },
     }
 
@@ -234,4 +239,140 @@ def mostrar_grafo(
         )
 
     html_content = net.generate_html()
+
+    target_init = "network = new vis.Network(container, data, options);"
+    if target_init in html_content:
+        js_persistencia = f"""
+        // --- CONTROL DE PERSISTENCIA DE POSICIONES DE VÉRTICES ---
+        var GRAFO_ID = "{grafo_id}";
+        var STORAGE_KEY = "grafo_posiciones_" + GRAFO_ID;
+
+        function guardarEstado(posiciones, viewPos, scale) {{
+            try {{
+                var payload = JSON.stringify({{
+                    positions: posiciones,
+                    viewPosition: viewPos,
+                    scale: scale
+                }});
+                try {{ if (window.parent && window.parent.sessionStorage) window.parent.sessionStorage.setItem(STORAGE_KEY, payload); }} catch(e){{}}
+                try {{ if (window.parent && window.parent.localStorage) window.parent.localStorage.setItem(STORAGE_KEY, payload); }} catch(e){{}}
+                try {{ sessionStorage.setItem(STORAGE_KEY, payload); }} catch(e){{}}
+                try {{ localStorage.setItem(STORAGE_KEY, payload); }} catch(e){{}}
+            }} catch(err) {{
+                console.warn("Error guardando posiciones:", err);
+            }}
+        }}
+
+        function cargarEstado() {{
+            var raw = null;
+            try {{ if (window.parent && window.parent.sessionStorage) raw = window.parent.sessionStorage.getItem(STORAGE_KEY); }} catch(e){{}}
+            if (!raw) {{ try {{ if (window.parent && window.parent.localStorage) raw = window.parent.localStorage.getItem(STORAGE_KEY); }} catch(e){{}} }}
+            if (!raw) {{ try {{ raw = sessionStorage.getItem(STORAGE_KEY); }} catch(e){{}} }}
+            if (!raw) {{ try {{ raw = localStorage.getItem(STORAGE_KEY); }} catch(e){{}} }}
+            if (raw) {{
+                try {{
+                    return JSON.parse(raw);
+                }} catch(e) {{
+                    return null;
+                }}
+            }}
+            return null;
+        }}
+
+        // Limpieza de claves viejas de otros grafos
+        try {{
+            var storageList = [];
+            try {{ if (window.parent && window.parent.localStorage) storageList.push(window.parent.localStorage); }} catch(e){{}}
+            try {{ if (window.parent && window.parent.sessionStorage) storageList.push(window.parent.sessionStorage); }} catch(e){{}}
+            try {{ storageList.push(localStorage); }} catch(e){{}}
+            try {{ storageList.push(sessionStorage); }} catch(e){{}}
+
+            storageList.forEach(function(store) {{
+                for (var i = store.length - 1; i >= 0; i--) {{
+                    var k = store.key(i);
+                    if (k && k.indexOf("grafo_posiciones_") === 0 && k !== STORAGE_KEY) {{
+                        store.removeItem(k);
+                    }}
+                }}
+            }});
+        }} catch(e) {{}}
+
+        var savedState = cargarEstado();
+
+        if (savedState && savedState.positions) {{
+            // Aplicar las posiciones guardadas a los vértices antes de renderizar
+            var updates = [];
+            nodes.forEach(function(item) {{
+                if (savedState.positions[item.id]) {{
+                    updates.push({{
+                        id: item.id,
+                        x: savedState.positions[item.id].x,
+                        y: savedState.positions[item.id].y
+                    }});
+                }}
+            }});
+            if (updates.length > 0) {{
+                nodes.update(updates);
+            }}
+            // Desactivar física para congelar la posición de los vértices al avanzar o retroceder paso
+            options.physics = {{ enabled: false }};
+        }}
+
+        network = new vis.Network(container, data, options);
+
+        if (!savedState || !savedState.positions) {{
+            // Grafo recién generado: registrar posiciones tras estabilización física
+            function registrarPosicionesIniciales() {{
+                try {{
+                    var pos = network.getPositions();
+                    var viewPos = network.getViewPosition();
+                    var scale = network.getScale();
+                    if (pos && Object.keys(pos).length > 0) {{
+                        guardarEstado(pos, viewPos, scale);
+                        network.setOptions({{ physics: {{ enabled: false }} }});
+                    }}
+                }} catch(e) {{}}
+            }}
+
+            setTimeout(registrarPosicionesIniciales, 150);
+
+            network.once("stabilizationIterationsDone", function() {{
+                registrarPosicionesIniciales();
+            }});
+            network.once("stabilized", function() {{
+                registrarPosicionesIniciales();
+            }});
+        }} else {{
+            // Restaurar cámara / zoom si existe
+            if (savedState.viewPosition && typeof savedState.scale === "number") {{
+                network.moveTo({{
+                    position: savedState.viewPosition,
+                    scale: savedState.scale,
+                    animation: false
+                }});
+            }}
+        }}
+
+        // Guardar posiciones tras terminar de arrastrar vértices en pantalla
+        network.on("dragEnd", function(params) {{
+            try {{
+                var pos = network.getPositions();
+                var viewPos = network.getViewPosition();
+                var scale = network.getScale();
+                guardarEstado(pos, viewPos, scale);
+            }} catch(e) {{}}
+        }});
+
+        // Guardar también si el usuario hizo zoom o paneo
+        network.on("zoom", function() {{
+            try {{
+                var pos = network.getPositions();
+                var viewPos = network.getViewPosition();
+                var scale = network.getScale();
+                guardarEstado(pos, viewPos, scale);
+            }} catch(e) {{}}
+        }});
+        """
+        html_content = html_content.replace(target_init, js_persistencia, 1)
+
     st.components.v1.html(html_content, height=520, scrolling=False)
