@@ -47,6 +47,10 @@ def render():
             paso_adelante=paso_adelante,
         )
 
+        # Sincronización del modo si el usuario lo cambió en los controles
+        if datos_controles["modo"] != orquestador.modo:
+            orquestador.cambiar_modo(datos_controles["modo"])
+
         # Manejo de la acción: Generar grafo
         if datos_controles["generar"]:
             orquestador.generar_grafo(
@@ -62,6 +66,19 @@ def render():
             origen = datos_controles["origen_manual"]
             destino = datos_controles["destino_manual"]
             exito, mensaje = orquestador.agregar_conexion_manual(origen, destino)
+            if not exito:
+                st.warning(mensaje)
+            else:
+                st.rerun()
+
+        # Manejo de la acción: Cancelar conexión manual
+        if datos_controles.get("cancelar_manual"):
+            origen = datos_controles.get("origen_manual")
+            destino = datos_controles.get("destino_manual")
+            if origen and destino and orquestador.existe_conexion(origen, destino):
+                exito, mensaje = orquestador.eliminar_conexion_manual(origen, destino)
+            else:
+                exito, mensaje = orquestador.cancelar_ultima_conexion()
             if not exito:
                 st.warning(mensaje)
             else:

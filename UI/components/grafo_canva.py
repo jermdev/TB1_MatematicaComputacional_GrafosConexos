@@ -97,7 +97,7 @@ def _definir_color_nodo(
         ]
 
         for idx, componente in enumerate(componentes_conexas):
-            if vertice_id in componente:
+            if str(vertice_id) in [str(c) for c in componente]:
                 bg, border = palette[idx % len(palette)]
                 return {
                     "background": bg,
@@ -106,12 +106,15 @@ def _definir_color_nodo(
                     "hover": {"background": bg, "border": border},
                 }
 
+    if not (0 <= paso_actual < len(pasos_algoritmo)):
+        return default_color
+
     paso = pasos_algoritmo[paso_actual]
-    visitados = set(getattr(paso, "visitados", set()))
+    visitados = set(str(v) for v in getattr(paso, "visitados", set()))
     if getattr(paso, "nodo_actual", None) is not None:
         visitados.add(str(paso.nodo_actual))
 
-    if vertice_id in visitados:
+    if str(vertice_id) in visitados:
         return {
             "background": "#fbbf24",
             "border": "#d97706",
@@ -135,8 +138,8 @@ def mostrar_grafo(
     """
     if modo_manual:
         st.caption(
-            "💡 **Interacción táctil / manual activa:** Pulsa **'Add Edge'** en la barra superior del lienzo "
-            "y toca/arrastra entre dos vértices para conectarlos en pantalla."
+            "💡 **Interacción activa:** Agrega conexiones desde el panel lateral derecho "
+            "o usa las herramientas interactivas del lienzo."
         )
 
     net = pv.network.Network(
@@ -144,6 +147,7 @@ def mostrar_grafo(
         width="100%",
         directed=grafo.dirigido,
         notebook=False,
+        cdn_resources="remote",
     )
 
     opciones = {
@@ -200,7 +204,7 @@ def mostrar_grafo(
             "deleteEdge": True,
         }
 
-    net.set_options(json.dumps(opciones))
+    net.options = opciones
 
     for vertice in grafo.vertices:
         etiqueta = vertice.etiqueta or vertice.id

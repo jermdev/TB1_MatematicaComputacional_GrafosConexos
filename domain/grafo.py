@@ -9,14 +9,33 @@ class Grafo:
         self._adyacencia: dict[str, list[str]] = {}
 
     def agregar_vertice(self, vertice: Vertice) -> None:
-        if vertice.id in self._vertices:
-            raise ValueError(f"Vértice {vertice.id} ya existe")
-        self._vertices[vertice.id] = vertice
-        self._adyacencia[vertice.id] = []
+        v_id = str(vertice.id)
+        if v_id in self._vertices:
+            raise ValueError(f"Vértice {v_id} ya existe")
+        self._vertices[v_id] = vertice
+        self._adyacencia[v_id] = []
+
+    def obtener_vertice(self, vertice_id: str) -> Vertice | None:
+        return self._vertices.get(str(vertice_id))
+
+    def obtener_etiqueta(self, vertice_id: str) -> str:
+        v = self.obtener_vertice(vertice_id)
+        return (v.etiqueta or str(v.id)) if v else str(vertice_id)
+
+    def existe_arista(self, origen_id: str, destino_id: str) -> bool:
+        u, v = str(origen_id), str(destino_id)
+        for a in self._aristas:
+            if a.origen == u and a.destino == v:
+                return True
+            if not (a.dirigida or self.dirigido) and a.origen == v and a.destino == u:
+                return True
+        return False
 
     def agregar_arista(self, arista: Arista) -> None:
         if arista.origen not in self._vertices or arista.destino not in self._vertices:
             raise ValueError("Ambos vértices deben existir antes de conectar")
+        if self.existe_arista(arista.origen, arista.destino):
+            return
         self._aristas.append(arista)
         self._adyacencia[arista.origen].append(arista.destino)
         if not (arista.dirigida or self.dirigido):

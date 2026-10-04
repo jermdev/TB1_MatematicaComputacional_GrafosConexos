@@ -64,6 +64,7 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
     origen_manual = None
     destino_manual = None
     conectar_manual = False
+    cancelar_manual = False
     limpiar_manual = False
 
     if modo == "Manual" and orquestador and orquestador.grafo and len(orquestador.grafo.vertices) >= 2:
@@ -90,9 +91,42 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
                 key="manual_sel_destino",
             )
 
-            c_btn_conn, c_btn_clear = st.columns([1.5, 1])
-            conectar_manual = c_btn_conn.button("➕ Conectar", use_container_width=True, key="btn_conectar_manual")
-            limpiar_manual = c_btn_clear.button("🗑️ Limpiar", use_container_width=True, key="btn_limpiar_manual")
+            # Validar relación entre los vértices seleccionados
+            es_mismo_vertice = (origen_manual == destino_manual)
+            conexion_ya_existe = orquestador.existe_conexion(origen_manual, destino_manual)
+
+            etiq_origen = orquestador.obtener_etiqueta_vertice(origen_manual)
+            etiq_destino = orquestador.obtener_etiqueta_vertice(destino_manual)
+
+            if es_mismo_vertice:
+                st.info("ℹ️ Selecciona dos vértices diferentes para conectar.")
+            elif conexion_ya_existe:
+                st.warning(f"⚠️ Ya existe una conexión entre **{etiq_origen}** y **{etiq_destino}**.")
+            else:
+                st.success(f"✨ Listo para conectar **{etiq_origen}** con **{etiq_destino}**.")
+
+            c_btn_conn, c_btn_cancel, c_btn_clear = st.columns([1.2, 1.2, 1])
+            conectar_manual = c_btn_conn.button(
+                "➕ Conectar",
+                use_container_width=True,
+                disabled=(es_mismo_vertice or conexion_ya_existe),
+                key="btn_conectar_manual",
+                type="primary",
+            )
+            cancelar_manual = c_btn_cancel.button(
+                "❌ Cancelar",
+                use_container_width=True,
+                disabled=(not orquestador.grafo.aristas),
+                key="btn_cancelar_manual",
+                help="Cancela la conexión entre los vértices seleccionados o la última generada",
+            )
+            limpiar_manual = c_btn_clear.button(
+                "🗑️ Limpiar",
+                use_container_width=True,
+                disabled=(not orquestador.grafo.aristas),
+                key="btn_limpiar_manual",
+                help="Elimina todas las conexiones",
+            )
 
             if orquestador.grafo.aristas:
                 st.caption(f"Aristas actuales ({len(orquestador.grafo.aristas)}):")
@@ -132,5 +166,6 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
         "origen_manual": origen_manual,
         "destino_manual": destino_manual,
         "conectar_manual": conectar_manual,
+        "cancelar_manual": cancelar_manual,
         "limpiar_manual": limpiar_manual,
     }
