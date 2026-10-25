@@ -1,7 +1,7 @@
 import random
-from domain.arista import Arista
-from domain.grafo import Grafo
-from domain.vertice import Vertice
+from domain.Entidades.arista import Arista
+from domain.Entidades.grafo import Grafo
+from domain.Entidades.vertice import Vertice
 
 
 def _generar_etiqueta(indice: int) -> str:

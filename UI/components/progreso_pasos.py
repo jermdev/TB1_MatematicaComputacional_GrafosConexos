@@ -1,5 +1,5 @@
 import streamlit as st
-from domain.paso_algoritmo import Paso_Algoritmo
+from domain.Entidades.paso_algoritmo import Paso_Algoritmo
 
 def progreso_pasos(pasos, paso_actual):
     """

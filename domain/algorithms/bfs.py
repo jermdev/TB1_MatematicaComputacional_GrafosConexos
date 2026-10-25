@@ -1,7 +1,7 @@
 from collections import deque
 
-from algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
-from domain.paso_algoritmo import Paso_Algoritmo, Tipo_Paso
+from domain.algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
+from domain.Entidades.paso_algoritmo import Paso_Algoritmo, Tipo_Paso
 
 
 class BFS(AlgoritmoConectividadGrafo):

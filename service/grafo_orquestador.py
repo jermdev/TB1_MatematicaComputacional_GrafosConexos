@@ -1,9 +1,9 @@
 import uuid
-from algorithms.dfs import DFS
-from algorithms.bfs import BFS
-from domain.arista import Arista
-from domain.grafo import Grafo
-from domain.vertice import Vertice
+from domain.algorithms.dfs import DFS
+from domain.algorithms.bfs import BFS
+from domain.Entidades.arista import Arista
+from domain.Entidades.grafo import Grafo
+from domain.Entidades.vertice import Vertice
 from service.generador_grafo_service import (
     crear_grafo_ejemplo,
     generar_grafo_aleatorio,

@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import pyvis as pv
 import streamlit as st
-from domain.grafo import Grafo
+from domain.Entidades.grafo import Grafo
 
 
 def grafo_canva(

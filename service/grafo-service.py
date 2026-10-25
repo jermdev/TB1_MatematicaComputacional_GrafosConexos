@@ -1,7 +1,7 @@
 
-from domain.vertice import Vertice
-from domain.grafo import Grafo
-from algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
+from domain.Entidades.vertice import Vertice
+from domain.Entidades.grafo import Grafo
+from domain.algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
 class grafoService:
     def __init__(self, grafoRepository: Grafo = None, algoritmo_conectividad_grafo: AlgoritmoConectividadGrafo = None):
         self.grafoRepository = grafoRepository
