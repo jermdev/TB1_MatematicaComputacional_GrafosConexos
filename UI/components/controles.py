@@ -1,13 +1,14 @@
 import streamlit as st
+from service.grafo_orquestador import GrafoOrquestador
 
-
-def render_controles(orquestador=None, paso_atras: callable = None, paso_adelante: callable = None):
+def render_controles(orquestador=None , paso_atras: callable = None, paso_adelante: callable = None):
     """
     Renderiza los controles de la interfaz de usuario para configurar,
     generar y manipular el grafo, así como navegar por los pasos del algoritmo.
     Retorna un diccionario con todos los valores capturados.
     """
     st.subheader("⚙️ Controles")
+
 
     num_vert_default = getattr(orquestador, "num_vertices", 4) if orquestador else 4
     modo_default = getattr(orquestador, "modo", "Automático") if orquestador else "Automático"
@@ -67,10 +68,10 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
     cancelar_manual = False
     limpiar_manual = False
 
-    if modo == "Manual" and orquestador and orquestador.grafo and len(orquestador.grafo.vertices) >= 2:
+    if modo == "Manual" and orquestador and orquestador.grafo_Service and len(orquestador.grafo_Service.get_vertices()) >= 2:
         with st.container(border=True):
             st.markdown("**🔗 Agregar conexión manual**")
-            vertices = orquestador.grafo.vertices
+            vertices = orquestador.grafo_Service.get_vertices()
             opciones = {v.id: f"{v.etiqueta or v.id} (ID: {v.id})" for v in vertices}
             ids = list(opciones.keys())
 
@@ -116,23 +117,23 @@ def render_controles(orquestador=None, paso_atras: callable = None, paso_adelant
             cancelar_manual = c_btn_cancel.button(
                 "❌ Cancelar",
                 use_container_width=True,
-                disabled=(not orquestador.grafo.aristas),
+                disabled=(not orquestador.grafo_Service.get_aristas()),
                 key="btn_cancelar_manual",
                 help="Cancela la conexión entre los vértices seleccionados o la última generada",
             )
             limpiar_manual = c_btn_clear.button(
                 "🗑️ Limpiar",
                 use_container_width=True,
-                disabled=(not orquestador.grafo.aristas),
+                disabled=(not orquestador.grafo_Service.get_aristas()),
                 key="btn_limpiar_manual",
                 help="Elimina todas las conexiones",
             )
 
-            if orquestador.grafo.aristas:
-                st.caption(f"Aristas actuales ({len(orquestador.grafo.aristas)}):")
+            if orquestador.grafo_Service.get_aristas():
+                st.caption(f"Aristas actuales ({len(orquestador.grafo_Service.get_aristas())}):")
                 lista_aristas = [
-                    f"{orquestador.obtener_etiqueta_vertice(a.origen)} ↔ {orquestador.obtener_etiqueta_vertice(a.destino)}"
-                    for a in orquestador.grafo.aristas
+                    f"{orquestador.grafo_Service.obtener_etiqueta(a.origen)} ↔ {orquestador.grafo_Service.obtener_etiqueta(a.destino)}"
+                    for a in orquestador.grafo_Service.get_aristas()
                 ]
                 st.write(", ".join(lista_aristas))
 

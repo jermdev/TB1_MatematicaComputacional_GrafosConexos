@@ -3,6 +3,7 @@ from domain.algorithms.dfs import DFS
 from domain.algorithms.bfs import BFS
 from domain.Entidades.arista import Arista
 from domain.Entidades.grafo import Grafo
+from service.grafo_service import grafoService
 from domain.Entidades.vertice import Vertice
 from service.generador_grafo_service import (
     crear_grafo_ejemplo,
@@ -21,7 +22,7 @@ class GrafoOrquestador:
         # Identificador único para el grafo actual (control de persistencia de posiciones)
         self.grafo_id: str = str(uuid.uuid4())
         # Inicializa con el grafo de ejemplo
-        self.grafo: Grafo = crear_grafo_ejemplo()
+        self.grafo_Service: grafoService = crear_grafo_ejemplo()
         self.modo: str = "Automático"
         self.num_vertices: int = 4
         self.algoritmo_seleccionado: str = "DFS"
@@ -33,6 +34,9 @@ class GrafoOrquestador:
         self.ultimo_mensaje: str = ""
         self.actualizar_algoritmo(paso_inicial=0)
 
+    def grafo_Service(self) -> grafoService:
+        return self.grafo_Service
+
     def generar_grafo(
         self,
         num_vertices: int,
@@ -40,7 +44,7 @@ class GrafoOrquestador:
         algoritmo: str = "DFS",
         probabilidad: float = 0.35,
         dirigido: bool = False,
-    ) -> Grafo:
+    ) -> grafoService:
         """
         Genera un nuevo grafo según los parámetros de configuración.
         El índice de paso se inicializa siempre en el primer paso (paso 0).
@@ -52,16 +56,16 @@ class GrafoOrquestador:
         self.algoritmo_seleccionado = algoritmo
 
         if modo == "Automático":
-            self.grafo = generar_grafo_aleatorio(
+            self.grafo_Service = generar_grafo_aleatorio(
                 num_vertices=self.num_vertices,
                 probabilidad=probabilidad,
                 dirigido=dirigido,
             )
-            total_aristas = len(self.grafo.aristas)
+            total_aristas = len(self.grafo_Service.get_aristas())
             self.ultimo_mensaje = f"Grafo automático generado ({self.num_vertices} vértices, {total_aristas} aristas)."
         else:
             # Modo manual: se crean los vértices limpios para conectar
-            self.grafo = generar_grafo_vacio(
+            self.grafo_Service = generar_grafo_vacio(
                 num_vertices=self.num_vertices,
                 dirigido=dirigido,
             )
@@ -69,7 +73,7 @@ class GrafoOrquestador:
 
         self.actualizar_algoritmo(paso_inicial=0)
         self.paso_actual = 0
-        return self.grafo
+        return self.grafo_Service
 
     def cambiar_modo(self, modo: str):
         """Actualiza el modo actual (Automático o Manual)."""
@@ -77,33 +81,33 @@ class GrafoOrquestador:
 
     def obtener_etiqueta_vertice(self, vertice_id: str) -> str:
         """Retorna la etiqueta legible o el id de un vértice."""
-        if self.grafo:
-            return self.grafo.obtener_etiqueta(vertice_id)
+        if self.grafo_Service and self.grafo_Service.get_grafo():
+            return self.grafo_Service.get_grafo().obtener_etiqueta(vertice_id)
         return str(vertice_id)
 
     def existe_conexion(self, origen_id: str, destino_id: str) -> bool:
         """Verifica si ya existe una arista entre dos vértices en el grafo."""
-        if not self.grafo:
+        if not self.grafo_Service or not self.grafo_Service.get_grafo():
             return False
-        return self.grafo.existe_arista(origen_id, destino_id)
+        return self.grafo_Service.get_grafo().existe_arista(origen_id, destino_id)
 
     def actualizar_algoritmo(self, paso_inicial: int | None = None):
         """
         Recalcula los pasos del algoritmo y los componentes conexos
         para reflejar el estado actual del grafo.
         """
-        if not self.grafo:
+        if not self.grafo_Service or not self.grafo_Service.get_grafo() or not self.algoritmo_seleccionado:
             return
 
         if self.algoritmo_seleccionado == "DFS":
             algoritmo_obj = DFS()
-            algoritmo_obj.ejecutar(self.grafo)
+            algoritmo_obj.ejecutar(self.grafo_Service.get_grafo())
             self.pasos_algoritmo = algoritmo_obj.pasos
             self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
             self.pasos = list(algoritmo_obj.pasos)
         elif self.algoritmo_seleccionado == "BFS":
             algoritmo_obj = BFS()
-            algoritmo_obj.ejecutar(self.grafo)
+            algoritmo_obj.ejecutar(self.grafo_Service.get_grafo())
             self.pasos_algoritmo = algoritmo_obj.pasos
             self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
             self.pasos = list(algoritmo_obj.pasos)
@@ -111,7 +115,7 @@ class GrafoOrquestador:
             self.pasos_algoritmo = []
             self.componentes_conexas = []
             self.pasos = [
-                f"Grafo con {len(self.grafo.vertices)} vértices y {len(self.grafo.aristas)} aristas.",
+                f"Grafo con {len(self.grafo_Service.get_vertices())} vértices y {len(self.grafo_Service.get_aristas())} aristas.",
                 f"Algoritmo: {self.algoritmo_seleccionado}.",
             ]
 
@@ -131,14 +135,14 @@ class GrafoOrquestador:
         Agrega una arista manualmente entre dos vértices del grafo actual.
         Valida que no exista previamente y actualiza el análisis de componentes conexas.
         """
-        if not self.grafo:
+        if not self.grafo_Service or not self.grafo_Service.get_grafo():
             return False, "No hay ningún grafo inicializado."
 
         u, v = str(origen_id), str(destino_id)
         if u == v:
             return False, "No se permiten bucles (origen y destino deben ser distintos)."
 
-        vertices_dict = {str(vert.id): vert for vert in self.grafo.vertices}
+        vertices_dict = {str(vert.id): vert for vert in self.grafo_Service.get_vertices()}
         if u not in vertices_dict or v not in vertices_dict:
             return False, "Uno o ambos vértices no existen en el grafo actual."
 
@@ -154,12 +158,12 @@ class GrafoOrquestador:
             peso=peso,
             dirigida=dirigida,
         )
-        self.grafo.agregar_arista(nueva_arista)
+        self.grafo_Service.get_grafo().agregar_arista(nueva_arista)
         self.actualizar_algoritmo()
 
         etiqueta_orig = self.obtener_etiqueta_vertice(u)
         etiqueta_dest = self.obtener_etiqueta_vertice(v)
-        simbolo = "→" if (dirigida or self.grafo.dirigido) else "↔"
+        simbolo = "→" if (dirigida or self.grafo_Service.get_grafo().dirigido) else "↔"
         msg = f"Conexión agregada: {etiqueta_orig} {simbolo} {etiqueta_dest}"
 
         self.ultimo_mensaje = msg
@@ -169,15 +173,15 @@ class GrafoOrquestador:
         """
         Elimina una arista existente entre dos vértices.
         """
-        if not self.grafo:
+        if not self.grafo_Service or not self.grafo_Service.get_grafo():
             return False, "No hay ningún grafo activo."
 
         u, v = str(origen_id), str(destino_id)
         aristas_nuevas = []
         encontrada = False
-        es_dirigido = self.grafo.dirigido
+        es_dirigido = self.grafo_Service.get_grafo().dirigido
 
-        for a in self.grafo._aristas:
+        for a in self.grafo_Service.get_grafo()._aristas:
             coincide = (a.origen == u and a.destino == v)
             if not es_dirigido and not a.dirigida:
                 coincide = coincide or (a.origen == v and a.destino == u)
@@ -190,13 +194,13 @@ class GrafoOrquestador:
         if not encontrada:
             return False, f"No se encontró arista entre {u} y {v}."
 
-        self.grafo._aristas = aristas_nuevas
+        self.grafo_Service.get_grafo()._aristas = aristas_nuevas
         # Reconstruir listas de adyacencia
-        self.grafo._adyacencia = {vert.id: [] for vert in self.grafo.vertices}
-        for a in self.grafo._aristas:
-            self.grafo._adyacencia[a.origen].append(a.destino)
-            if not (a.dirigida or self.grafo.dirigido):
-                self.grafo._adyacencia[a.destino].append(a.origen)
+        self.grafo_Service.get_grafo()._adyacencia = {vert.id: [] for vert in self.grafo_Service.get_grafo().vertices}
+        for a in self.grafo_Service.get_grafo()._aristas:
+            self.grafo_Service.get_grafo()._adyacencia[a.origen].append(a.destino)
+            if not (a.dirigida or self.grafo_Service.get_grafo().dirigido):
+                self.grafo_Service.get_grafo()._adyacencia[a.destino].append(a.origen)
 
         self.actualizar_algoritmo()
         etiqueta_orig = self.obtener_etiqueta_vertice(u)
@@ -209,17 +213,17 @@ class GrafoOrquestador:
         """
         Elimina la última arista agregada al grafo (opción de cancelar/deshacer).
         """
-        if not self.grafo or not self.grafo.aristas:
+        if not self.grafo_Service or not self.grafo_Service.get_grafo().aristas:
             return False, "No hay conexiones activas para cancelar."
 
-        ultima = self.grafo.aristas[-1]
+        ultima = self.grafo_Service.get_grafo().aristas[-1]
         return self.eliminar_conexion_manual(ultima.origen, ultima.destino)
 
     def limpiar_conexiones(self):
         """Elimina todas las aristas del grafo manteniendo sus vértices."""
-        if self.grafo:
-            self.grafo._aristas = []
-            self.grafo._adyacencia = {v.id: [] for v in self.grafo.vertices}
+        if self.grafo_Service and self.grafo_Service.get_grafo():
+            self.grafo_Service.get_grafo()._aristas = []
+            self.grafo_Service.get_grafo()._adyacencia = {v.id: [] for v in self.grafo_Service.get_grafo().vertices}
             self.actualizar_algoritmo()
             self.ultimo_mensaje = "Todas las conexiones fueron eliminadas."
 
@@ -241,7 +245,8 @@ class GrafoOrquestador:
             self.paso_actual -= 1
 
     def obtener_grafo(self) -> Grafo:
-        return self.grafo
+        return self.grafo_Service.get_grafo() if self.grafo_Service else None
 
     def obtener_matriz(self) -> list[list[int]]:
-        return self.grafo.get_matriz() if self.grafo else []
+        grafo = self.grafo_Service.get_grafo() if self.grafo_Service else None
+        return grafo.get_matriz() if grafo else []

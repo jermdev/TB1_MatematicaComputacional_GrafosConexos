@@ -42,6 +42,9 @@ class Grafo:
             self._adyacencia[arista.destino].append(arista.origen)
 
     @property
+    def get_dirigido(self) -> bool:
+        return self.dirigido
+    @property
     def vertices(self) -> list[Vertice]:
         return list(self._vertices.values())
 
@@ -53,6 +56,9 @@ class Grafo:
         return self._adyacencia.get(vertice_id, [])
 
     def get_lista_adyacencia(self) -> dict[str, list[str]]:
+        return self._adyacencia
+
+    def get_grafo(self) -> dict[str, list[str]]:
         return self._adyacencia
 
     def get_matriz(self) -> list[list[int]]:
