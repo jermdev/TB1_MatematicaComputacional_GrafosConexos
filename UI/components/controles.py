@@ -1,14 +1,13 @@
 import streamlit as st
 from service.grafo_orquestador import GrafoOrquestador
 
-def render_controles(orquestador=None , paso_atras: callable = None, paso_adelante: callable = None):
+def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable = None, paso_adelante: callable = None):
     """
     Renderiza los controles de la interfaz de usuario para configurar,
     generar y manipular el grafo, así como navegar por los pasos del algoritmo.
     Retorna un diccionario con todos los valores capturados.
     """
     st.subheader("⚙️ Controles")
-
 
     num_vert_default = getattr(orquestador, "num_vertices", 4) if orquestador else 4
     modo_default = getattr(orquestador, "modo", "Automático") if orquestador else "Automático"
