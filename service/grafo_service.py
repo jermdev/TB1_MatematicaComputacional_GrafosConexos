@@ -2,6 +2,8 @@ from domain.Entidades.arista import Arista
 from domain.Entidades.vertice import Vertice
 from domain.Entidades.grafo import Grafo
 from domain.algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
+
+
 class grafoService:
     def __init__(self, dirigido: bool, grafoRepository: Grafo = None, algoritmo_conectividad_grafo: AlgoritmoConectividadGrafo = None):
         self.grafoRepository = grafoRepository if grafoRepository is not None else Grafo(dirigido=dirigido)
@@ -37,14 +39,34 @@ class grafoService:
     def get_algoritmo_conectividad_grafo(self):
         return self.algoritmo_conectividad_grafo
 
+    def set_algoritmo_conectividad_grafo(self, algoritmo: AlgoritmoConectividadGrafo):
+        self.algoritmo_conectividad_grafo = algoritmo
+
+    def ejecutar_algoritmo(self):
+        if self.algoritmo_conectividad_grafo is not None:
+            return self.algoritmo_conectividad_grafo.ejecutar(self.grafoRepository)
+        return []
+
+    def obtener_pasos(self) -> list:
+        if self.algoritmo_conectividad_grafo is not None:
+            return getattr(self.algoritmo_conectividad_grafo, "pasos", [])
+        return []
+
+    def obtener_componentes_conexas(self) -> list[list[str]]:
+        if self.algoritmo_conectividad_grafo is not None:
+            return getattr(self.algoritmo_conectividad_grafo, "componentes", [])
+        return []
+
+    def es_conexo(self) -> bool:
+        if self.algoritmo_conectividad_grafo is not None:
+            return self.algoritmo_conectividad_grafo.es_conexo(self.grafoRepository)
+        return False
+
     def obtener_etiqueta(self, vertice_id: str):
         return self.grafoRepository.obtener_etiqueta(vertice_id)
 
     def get_vertices(self):
         return self.grafoRepository.vertices
 
-    def get_aristas(self):
-        return self.grafoRepository.aristas
-
     def get_dirigido(self):
-        return self.grafoRepository.get_dirigido
+        return self.grafoRepository.dirigido

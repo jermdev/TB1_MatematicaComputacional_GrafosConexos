@@ -97,6 +97,12 @@ def _definir_color_nodo(
             ("#fbcfe8", "#9d174d"),
             ("#c7d2fe", "#3730a3"),
             ("#fed7aa", "#9a4d00"),
+            ("#99f6e4", "#115e59"),
+            ("#fecdd3", "#9f1239"),
+            ("#d9f99d", "#3f6212"),
+            ("#ddd6fe", "#5b21b6"),
+            ("#fed7aa", "#c2410c"),
+            ("#f5d0fe", "#86198f"),
         ]
 
         for idx, componente in enumerate(componentes_conexas):
@@ -214,6 +220,17 @@ def mostrar_grafo(
     for vertice in grafo.vertices:
         etiqueta = vertice.etiqueta or vertice.id
         tooltip = f"Vértice: {etiqueta} | ID: {vertice.id}"
+        if (
+            paso_actual is not None
+            and pasos_algoritmo
+            and paso_actual == len(pasos_algoritmo) - 1
+            and componentes_conexas
+        ):
+            for idx, comp in enumerate(componentes_conexas, start=1):
+                if str(vertice.id) in [str(c) for c in comp]:
+                    tooltip += f" | Componente {idx}"
+                    break
+
         estilo_nodo = _definir_color_nodo(
             vertice.id,
             paso_actual=paso_actual,

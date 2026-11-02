@@ -97,7 +97,12 @@ def render():
 
     # ================= COLUMNA IZQUIERDA: PASO A PASO =================
     with col_pasos:
-        progreso_pasos(orquestador.pasos, orquestador.paso_actual)
+        progreso_pasos(
+            pasos=orquestador.pasos,
+            paso_actual=orquestador.paso_actual,
+            componentes_conexas=getattr(orquestador, "componentes_conexas", []),
+            obtener_etiqueta=orquestador.obtener_etiqueta_vertice,
+        )
 
     # ================= COLUMNA CENTRAL: VISUALIZACION DEL GRAFO O MATRIZ =================
     with col_grafo:

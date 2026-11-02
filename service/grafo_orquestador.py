@@ -101,16 +101,18 @@ class GrafoOrquestador:
 
         if self.algoritmo_seleccionado == "DFS":
             algoritmo_obj = DFS()
-            algoritmo_obj.ejecutar(self.grafo_Service.get_grafo())
-            self.pasos_algoritmo = algoritmo_obj.pasos
-            self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
-            self.pasos = list(algoritmo_obj.pasos)
+            self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
+            self.grafo_Service.ejecutar_algoritmo()
+            self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
+            self.componentes_conexas = [componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()]
+            self.pasos = list(self.pasos_algoritmo)
         elif self.algoritmo_seleccionado == "BFS":
             algoritmo_obj = BFS()
-            algoritmo_obj.ejecutar(self.grafo_Service.get_grafo())
-            self.pasos_algoritmo = algoritmo_obj.pasos
-            self.componentes_conexas = [componente.copy() for componente in algoritmo_obj.componentes]
-            self.pasos = list(algoritmo_obj.pasos)
+            self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
+            self.grafo_Service.ejecutar_algoritmo()
+            self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
+            self.componentes_conexas = [componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()]
+            self.pasos = list(self.pasos_algoritmo)
         else:
             self.pasos_algoritmo = []
             self.componentes_conexas = []
@@ -250,3 +252,9 @@ class GrafoOrquestador:
     def obtener_matriz(self) -> list[list[int]]:
         grafo = self.grafo_Service.get_grafo() if self.grafo_Service else None
         return grafo.get_matriz() if grafo else []
+
+    def obtener_componentes_conexas(self) -> list[list[str]]:
+        return [componente.copy() for componente in self.componentes_conexas]
+
+    def es_conexo(self) -> bool:
+        return len(self.componentes_conexas) == 1

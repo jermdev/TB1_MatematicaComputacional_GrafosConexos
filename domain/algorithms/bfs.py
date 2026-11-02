@@ -1,10 +1,15 @@
 from collections import deque
-
 from domain.algorithms.algoritmo_conectividad_grafo import AlgoritmoConectividadGrafo
 from domain.Entidades.paso_algoritmo import Paso_Algoritmo, Tipo_Paso
+from domain.Entidades.grafo import Grafo
 
 
 class BFS(AlgoritmoConectividadGrafo):
+    """
+    Algoritmo de búsqueda en anchura (Breadth-First Search - BFS)
+    para el análisis de conectividad y determinación de componentes conexas paso a paso.
+    """
+
     def __init__(self, paso_a_paso: bool = False):
         super().__init__(paso_a_paso)
         self.pasos: list[Paso_Algoritmo] = []
@@ -31,7 +36,11 @@ class BFS(AlgoritmoConectividadGrafo):
             )
         )
 
-    def ejecutar(self, grafo) -> list[list[int]]:
+    def ejecutar(self, grafo: Grafo) -> list[list[int]]:
+        """
+        Ejecuta la exploración BFS sobre el grafo, registrando cada paso del recorrido
+        y agrupando los vértices en sus componentes conexas.
+        """
         self.pasos = []
         self.componentes = []
         visitados: set[str] = set()
@@ -81,10 +90,12 @@ class BFS(AlgoritmoConectividadGrafo):
 
         return grafo.get_matriz()
 
-    def encontrar_componentes_conexas(self, grafo) -> list[list[str]]:
+    def encontrar_componentes_conexas(self, grafo: Grafo) -> list[list[str]]:
+        """Retorna las componentes conexas identificadas como listas de IDs de vértices."""
         self.ejecutar(grafo)
         return [componente.copy() for componente in self.componentes]
 
-    def es_conexo(self, grafo) -> bool:
+    def es_conexo(self, grafo: Grafo) -> bool:
+        """Determina si el grafo tiene exactamente una componente conexa no vacía."""
         self.ejecutar(grafo)
         return len(self.componentes) == 1
