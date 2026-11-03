@@ -57,8 +57,30 @@ class grafoService:
             return getattr(self.algoritmo_conectividad_grafo, "componentes", [])
         return []
 
-    def es_conexo(self) -> bool:
+    def obtener_componentes_fuertemente_conexas(self) -> list[list[str]]:
+        """Expone componentes fuertes solo para algoritmos que las implementen."""
         if self.algoritmo_conectividad_grafo is not None:
+            obtener_componentes = getattr(
+                self.algoritmo_conectividad_grafo,
+                "encontrar_componentes_fuertemente_conexas",
+                None,
+            )
+            if obtener_componentes is not None:
+                return obtener_componentes(self.grafoRepository)
+        return []
+
+    def es_conexo(self, fuertemente: bool = False) -> bool:
+        if self.algoritmo_conectividad_grafo is not None:
+            # BFS conserva su contrato actual; esta opción solo se usa con algoritmos
+            # que implementan explícitamente componentes fuertemente conexas.
+            if fuertemente and hasattr(
+                self.algoritmo_conectividad_grafo,
+                "encontrar_componentes_fuertemente_conexas",
+            ):
+                return self.algoritmo_conectividad_grafo.es_conexo(
+                    self.grafoRepository,
+                    fuertemente=True,
+                )
             return self.algoritmo_conectividad_grafo.es_conexo(self.grafoRepository)
         return False
 

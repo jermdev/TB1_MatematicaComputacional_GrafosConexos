@@ -77,12 +77,135 @@ class DFS(AlgoritmoConectividadGrafo):
 
             self.componentes.append(componente)
 
+        if grafo.get_dirigido:
+            self.componentes = self.encontrar_componentes_debilmente_conexas(grafo)
+
         return grafo.get_matriz()
 
+    def recorrer_desde(self, grafo, origen: str, vecinos=None) -> list[str]:
+        """Recorre desde origen siguiendo los vecinos definidos por el grafo."""
+        visitados: set[str] = set()
+        recorrido: list[str] = []
+        pila = [origen]
+
+        while pila:
+            nodo = pila.pop()
+            if nodo in visitados:
+                continue
+
+            visitados.add(nodo)
+            recorrido.append(nodo)
+
+            vecinos_nodo = vecinos(nodo) if vecinos is not None else grafo.vecinos(nodo)
+            for vecino in reversed(vecinos_nodo):
+                if vecino not in visitados:
+                    pila.append(vecino)
+
+        return recorrido
+
+    def _adyacencia_debil(self, grafo) -> dict[str, list[str]]:
+        adyacencia = {vertice.id: [] for vertice in grafo.vertices}
+
+        for arista in grafo.aristas:
+            adyacencia[arista.origen].append(arista.destino)
+            adyacencia[arista.destino].append(arista.origen)
+
+        return adyacencia
+
+    def _componentes_con(self, grafo, adyacencia: dict[str, list[str]]) -> list[list[str]]:
+        visitados: set[str] = set()
+        componentes: list[list[str]] = []
+
+        for vertice in grafo.vertices:
+            raiz = vertice.id
+            if raiz in visitados:
+                continue
+
+            componente: list[str] = []
+            pila = [raiz]
+            while pila:
+                nodo = pila.pop()
+                if nodo in visitados:
+                    continue
+
+                visitados.add(nodo)
+                componente.append(nodo)
+                pila.extend(reversed(adyacencia.get(nodo, [])))
+
+            componentes.append(componente)
+
+        return componentes
+
+    def encontrar_componentes_debilmente_conexas(self, grafo) -> list[list[str]]:
+        """Componentes del grafo ignorando el sentido de sus aristas."""
+        return self._componentes_con(grafo, self._adyacencia_debil(grafo))
+
+    def encontrar_componentes_fuertemente_conexas(self, grafo) -> list[list[str]]:
+        """Componentes fuertes mediante el algoritmo Kosaraju."""
+        visitados: set[str] = set()
+        orden_finalizacion: list[str] = []
+
+        for vertice in grafo.vertices:
+            raiz = vertice.id
+            if raiz in visitados:
+                continue
+
+            pila = [(raiz, False)]
+            while pila:
+                nodo, finalizado = pila.pop()
+                if finalizado:
+                    orden_finalizacion.append(nodo)
+                    continue
+                if nodo in visitados:
+                    continue
+
+                visitados.add(nodo)
+                pila.append((nodo, True))
+                for vecino in reversed(grafo.vecinos(nodo)):
+                    if vecino not in visitados:
+                        pila.append((vecino, False))
+
+        traspuesta: dict[str, list[str]] = {
+            vertice.id: [] for vertice in grafo.vertices
+        }
+        for nodo in grafo.get_lista_adyacencia():
+            for vecino in grafo.vecinos(nodo):
+                traspuesta[vecino].append(nodo)
+
+        visitados.clear()
+        componentes: list[list[str]] = []
+        for raiz in reversed(orden_finalizacion):
+            if raiz in visitados:
+                continue
+
+            componente: list[str] = []
+            pila = [raiz]
+            while pila:
+                nodo = pila.pop()
+                if nodo in visitados:
+                    continue
+
+                visitados.add(nodo)
+                componente.append(nodo)
+                pila.extend(reversed(traspuesta.get(nodo, [])))
+
+            componentes.append(componente)
+
+        return componentes
+
     def encontrar_componentes_conexas(self, grafo) -> list[list[str]]:
+        if grafo.get_dirigido:
+            self.componentes = self.encontrar_componentes_debilmente_conexas(grafo)
+            return [componente.copy() for componente in self.componentes]
+
         self.ejecutar(grafo)
         return [componente.copy() for componente in self.componentes]
 
-    def es_conexo(self, grafo) -> bool:
+    def es_conexo(self, grafo, fuertemente: bool = False) -> bool:
+        if grafo.get_dirigido and fuertemente:
+            return len(self.encontrar_componentes_fuertemente_conexas(grafo)) == 1
+        if grafo.get_dirigido:
+            return len(self.encontrar_componentes_debilmente_conexas(grafo)) == 1
+
         self.ejecutar(grafo)
         return len(self.componentes) == 1
