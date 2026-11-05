@@ -12,6 +12,8 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
     num_vert_default = getattr(orquestador, "num_vertices", 4) if orquestador else 4
     modo_default = getattr(orquestador, "modo", "Automático") if orquestador else "Automático"
     algoritmo_default = getattr(orquestador, "algoritmo_seleccionado", "DFS") if orquestador else "DFS"
+    dirigido_default = orquestador.es_dirigido() if orquestador else False
+    fuertemente_default = getattr(orquestador, "fuertemente", True) if orquestador else True
 
     with st.container(border=True):
         st.markdown("**Configuración del grafo**")
@@ -23,6 +25,15 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
             step=1,
             key="input_num_vertices",
         )
+
+        tipo_grafo = st.radio(
+            "Tipo de grafo",
+            ["No dirigido", "Dirigido"],
+            index=1 if dirigido_default else 0,
+            horizontal=True,
+            key="radio_tipo_grafo",
+        )
+        dirigido = (tipo_grafo == "Dirigido")
 
         modo = st.radio(
             "Modo de generación",
@@ -48,7 +59,7 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
     with st.container(border=True):
         st.markdown("**Algoritmo de análisis**")
-        opciones_alg = ["DFS", "BFS", "Union-Find"]
+        opciones_alg = ["DFS", "BFS"]
         idx_alg = opciones_alg.index(algoritmo_default) if algoritmo_default in opciones_alg else 0
         algoritmo = st.selectbox(
             "Seleccionar algoritmo",
@@ -56,6 +67,31 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
             index=idx_alg,
             key="select_algoritmo",
         )
+
+        fuertemente = fuertemente_default
+        if dirigido:
+            if algoritmo == "DFS":
+                opciones_con = [
+                    "Fuertemente conexo",
+                    "Débilmente conexo",
+                ]
+                tipo_con = st.radio(
+                    "Criterio de conectividad (Dirigido)",
+                    opciones_con,
+                    index=0 if fuertemente_default else 1,
+                    key="radio_conectividad_dirigido",
+                    help="Define qué componentes resaltar en el grafo al finalizar el recorrido.",
+                )
+                fuertemente = (tipo_con == "Fuertemente conexo")
+                st.caption(
+                    "ℹ️ **(DFS)** identifica componentes fuertemente conexas; "
+                    "la conectividad débil evalúa el grafo subyacente ignorando la dirección."
+                )
+            else:
+                st.caption(
+                    "ℹ️ En grafos dirigidos, selecciona **DFS** para analizar "
+                    "**Componentes Fuertemente Conexas** y **Débilmente Conexas**."
+                )
 
     with st.container(border=True):
         generar = st.button("🚀 Generar grafo", use_container_width=True, type="primary", key="btn_generar_grafo")
@@ -97,13 +133,14 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
             etiq_origen = orquestador.obtener_etiqueta_vertice(origen_manual)
             etiq_destino = orquestador.obtener_etiqueta_vertice(destino_manual)
+            simbolo = "→" if dirigido else "↔"
 
             if es_mismo_vertice:
                 st.info("ℹ️ Selecciona dos vértices diferentes para conectar.")
             elif conexion_ya_existe:
-                st.warning(f"⚠️ Ya existe una conexión entre **{etiq_origen}** y **{etiq_destino}**.")
+                st.warning(f"⚠️ Ya existe la conexión **{etiq_origen} {simbolo} {etiq_destino}**.")
             else:
-                st.success(f"✨ Listo para conectar **{etiq_origen}** con **{etiq_destino}**.")
+                st.success(f"✨ Listo para conectar **{etiq_origen} {simbolo} {etiq_destino}**.")
 
             c_btn_conn, c_btn_cancel, c_btn_clear = st.columns([1.2, 1.2, 1])
             conectar_manual = c_btn_conn.button(
@@ -131,7 +168,7 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
             if orquestador.grafo_Service.get_aristas():
                 st.caption(f"Aristas actuales ({len(orquestador.grafo_Service.get_aristas())}):")
                 lista_aristas = [
-                    f"{orquestador.grafo_Service.obtener_etiqueta(a.origen)} ↔ {orquestador.grafo_Service.obtener_etiqueta(a.destino)}"
+                    f"{orquestador.grafo_Service.obtener_etiqueta(a.origen)} {'→' if (a.dirigida or dirigido) else '↔'} {orquestador.grafo_Service.obtener_etiqueta(a.destino)}"
                     for a in orquestador.grafo_Service.get_aristas()
                 ]
                 st.write(", ".join(lista_aristas))
@@ -159,6 +196,8 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
     return {
         "num_vertices": int(num_vertices),
+        "dirigido": dirigido,
+        "fuertemente": fuertemente,
         "modo": modo,
         "algoritmo": algoritmo,
         "densidad": float(densidad) / 100.0,

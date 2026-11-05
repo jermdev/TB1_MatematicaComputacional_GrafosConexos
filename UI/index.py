@@ -51,6 +51,16 @@ def render():
         if datos_controles["modo"] != orquestador.modo:
             orquestador.cambiar_modo(datos_controles["modo"])
 
+        # Sincronización del tipo de grafo (Dirigido / No dirigido)
+        if datos_controles["dirigido"] != orquestador.es_dirigido():
+            orquestador.cambiar_dirigido(datos_controles["dirigido"])
+            st.rerun()
+
+        # Sincronización del criterio de conectividad en grafos dirigidos (Fuerte / Débil)
+        if datos_controles["fuertemente"] != getattr(orquestador, "fuertemente", True):
+            orquestador.cambiar_tipo_conectividad(datos_controles["fuertemente"])
+            st.rerun()
+
         # Sincronización de algoritmo si el usuario lo cambió en los controles
         if datos_controles["algoritmo"] != orquestador.algoritmo_seleccionado:
             orquestador.algoritmo_seleccionado = datos_controles["algoritmo"]
@@ -64,6 +74,7 @@ def render():
                 modo=datos_controles["modo"],
                 algoritmo=datos_controles["algoritmo"],
                 probabilidad=datos_controles.get("densidad", 0.35),
+                dirigido=datos_controles["dirigido"],
             )
             st.rerun()
 
@@ -71,7 +82,11 @@ def render():
         if datos_controles.get("conectar_manual"):
             origen = datos_controles["origen_manual"]
             destino = datos_controles["destino_manual"]
-            exito, mensaje = orquestador.agregar_conexion_manual(origen, destino)
+            exito, mensaje = orquestador.agregar_conexion_manual(
+                origen,
+                destino,
+                dirigida=datos_controles["dirigido"],
+            )
             if not exito:
                 st.warning(mensaje)
             else:
@@ -102,6 +117,10 @@ def render():
             paso_actual=orquestador.paso_actual,
             componentes_conexas=getattr(orquestador, "componentes_conexas", []),
             obtener_etiqueta=orquestador.obtener_etiqueta_vertice,
+            dirigido=orquestador.es_dirigido(),
+            fuertemente=getattr(orquestador, "fuertemente", True),
+            componentes_fuertemente_conexas=orquestador.obtener_componentes_fuertemente_conexas(),
+            componentes_debilmente_conexas=orquestador.obtener_componentes_debilmente_conexas(),
         )
 
     # ================= COLUMNA CENTRAL: VISUALIZACION DEL GRAFO O MATRIZ =================
@@ -110,7 +129,8 @@ def render():
         c_titulo, c_toggle = st.columns([2, 1.4])
         with c_titulo:
             modo_badge = "🎲 Automático" if orquestador.modo == "Automático" else "✋ Manual"
-            st.subheader(f"Visualización ({modo_badge})")
+            dir_badge = "↗️ Dirigido" if orquestador.es_dirigido() else "↔️ No dirigido"
+            st.subheader(f"Visualización ({modo_badge} · {dir_badge})")
 
         with c_toggle:
             texto_btn = (
@@ -134,4 +154,5 @@ def render():
             pasos_algoritmo=getattr(orquestador, "pasos_algoritmo", []),
             componentes_conexas=getattr(orquestador, "componentes_conexas", []),
             grafo_id=getattr(orquestador, "grafo_id", "default"),
+            fuertemente=getattr(orquestador, "fuertemente", True),
         )

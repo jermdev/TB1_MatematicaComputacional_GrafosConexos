@@ -13,6 +13,7 @@ def grafo_canva(
     pasos_algoritmo: list | None = None,
     componentes_conexas: list[list[str]] | None = None,
     grafo_id: str = "default",
+    fuertemente: bool = True,
 ):
     """
     Renderiza la visualización del grafo o su matriz de adyacencia según la vista elegida.
@@ -32,6 +33,7 @@ def grafo_canva(
                 pasos_algoritmo=pasos_algoritmo or [],
                 componentes_conexas=componentes_conexas or [],
                 grafo_id=grafo_id,
+                fuertemente=fuertemente,
             )
         elif vista == "ambos":
             c1, c2 = st.columns(2)
@@ -44,6 +46,7 @@ def grafo_canva(
                     pasos_algoritmo=pasos_algoritmo or [],
                     componentes_conexas=componentes_conexas or [],
                     grafo_id=grafo_id,
+                    fuertemente=fuertemente,
                 )
             with c2:
                 st.markdown("**Matriz de adyacencia**")
@@ -141,6 +144,7 @@ def mostrar_grafo(
     pasos_algoritmo: list | None = None,
     componentes_conexas: list[list[str]] | None = None,
     grafo_id: str = "default",
+    fuertemente: bool = True,
 ):
     """
     Renderiza el grafo interactivo con Pyvis.
@@ -151,6 +155,19 @@ def mostrar_grafo(
             "💡 **Interacción activa:** Agrega conexiones desde el panel lateral derecho "
             "o usa las herramientas interactivas del lienzo."
         )
+    elif (
+        grafo.dirigido
+        and paso_actual is not None
+        and pasos_algoritmo
+        and paso_actual == len(pasos_algoritmo) - 1
+        and componentes_conexas
+    ):
+        tipo_coloreado = (
+            "Componentes Fuertemente Conexas"
+            if fuertemente
+            else "Componentes Débilmente Conexas"
+        )
+        st.caption(f"🎨 **Coloreado final (Grafo Dirigido):** {tipo_coloreado}")
 
     net = pv.network.Network(
         height="500px",
@@ -158,6 +175,12 @@ def mostrar_grafo(
         directed=grafo.dirigido,
         notebook=False,
         cdn_resources="remote",
+    )
+
+    smooth_edges = (
+        {"enabled": True, "type": "curvedCW", "roundness": 0.16}
+        if grafo.dirigido
+        else {"type": "continuous"}
     )
 
     opciones = {
@@ -179,7 +202,7 @@ def mostrar_grafo(
                 "highlight": "#f59e0b",
                 "hover": "#0284c7",
             },
-            "smooth": {"type": "continuous"},
+            "smooth": smooth_edges,
             "width": 2.5,
         },
         "physics": {
@@ -228,7 +251,11 @@ def mostrar_grafo(
         ):
             for idx, comp in enumerate(componentes_conexas, start=1):
                 if str(vertice.id) in [str(c) for c in comp]:
-                    tooltip += f" | Componente {idx}"
+                    if grafo.dirigido:
+                        pref = "Comp. Fuerte" if fuertemente else "Comp. Débil"
+                        tooltip += f" | {pref} {idx}"
+                    else:
+                        tooltip += f" | Componente {idx}"
                     break
 
         estilo_nodo = _definir_color_nodo(

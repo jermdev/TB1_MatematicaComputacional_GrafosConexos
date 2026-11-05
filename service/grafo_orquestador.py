@@ -24,11 +24,15 @@ class GrafoOrquestador:
         # Inicializa con el grafo de ejemplo
         self.grafo_Service: grafoService = crear_grafo_ejemplo()
         self.modo: str = "Automático"
+        self.dirigido: bool = False
+        self.fuertemente: bool = True
         self.num_vertices: int = 4
         self.algoritmo_seleccionado: str = "DFS"
         self.vista_actual: str = "grafo"  # 'grafo' o 'matriz'
         self.pasos_algoritmo: list = []
         self.componentes_conexas: list[list[str]] = []
+        self.componentes_debilmente_conexas: list[list[str]] = []
+        self.componentes_fuertemente_conexas: list[list[str]] = []
         self.pasos: list = []
         self.paso_actual: int = 0
         self.ultimo_mensaje: str = ""
@@ -36,6 +40,50 @@ class GrafoOrquestador:
 
     def grafo_Service(self) -> grafoService:
         return self.grafo_Service
+
+    def es_dirigido(self) -> bool:
+        if self.grafo_Service and self.grafo_Service.get_grafo():
+            return self.grafo_Service.get_dirigido()
+        return self.dirigido
+
+    def cambiar_dirigido(self, dirigido: bool):
+        """Actualiza si el grafo es dirigido o no dirigido y recalcula sus componentes."""
+        self.dirigido = dirigido
+        if self.grafo_Service and self.grafo_Service.get_grafo():
+            grafo = self.grafo_Service.get_grafo()
+            grafo.dirigido = dirigido
+            if not dirigido:
+                aristas_unicas = []
+                vistos = set()
+                for a in grafo._aristas:
+                    par = tuple(sorted((str(a.origen), str(a.destino))))
+                    if par not in vistos:
+                        vistos.add(par)
+                        a._dirigida = False
+                        aristas_unicas.append(a)
+                grafo._aristas = aristas_unicas
+            else:
+                for a in grafo._aristas:
+                    a._dirigida = True
+
+            grafo._adyacencia = {v.id: [] for v in grafo.vertices}
+            for a in grafo._aristas:
+                grafo._adyacencia[a.origen].append(a.destino)
+                if not dirigido:
+                    grafo._adyacencia[a.destino].append(a.origen)
+
+            self.actualizar_algoritmo(paso_inicial=0)
+            tipo_txt = "dirigido" if dirigido else "no dirigido"
+            self.ultimo_mensaje = f"Grafo actualizado a modo {tipo_txt}."
+
+    def cambiar_tipo_conectividad(self, fuertemente: bool):
+        """Alterna entre visualización de componentes fuertemente conexas y débilmente conexas."""
+        self.fuertemente = fuertemente
+        if self.es_dirigido():
+            if self.fuertemente and self.componentes_fuertemente_conexas:
+                self.componentes_conexas = [c.copy() for c in self.componentes_fuertemente_conexas]
+            else:
+                self.componentes_conexas = [c.copy() for c in self.componentes_debilmente_conexas]
 
     def generar_grafo(
         self,
@@ -53,6 +101,7 @@ class GrafoOrquestador:
         self.grafo_id = str(uuid.uuid4())
         self.num_vertices = max(1, num_vertices)
         self.modo = modo
+        self.dirigido = dirigido
         self.algoritmo_seleccionado = algoritmo
 
         if modo == "Automático":
@@ -62,14 +111,16 @@ class GrafoOrquestador:
                 dirigido=dirigido,
             )
             total_aristas = len(self.grafo_Service.get_aristas())
-            self.ultimo_mensaje = f"Grafo automático generado ({self.num_vertices} vértices, {total_aristas} aristas)."
+            tipo_txt = "dirigido" if dirigido else "no dirigido"
+            self.ultimo_mensaje = f"Grafo {tipo_txt} automático generado ({self.num_vertices} vértices, {total_aristas} aristas)."
         else:
             # Modo manual: se crean los vértices limpios para conectar
             self.grafo_Service = generar_grafo_vacio(
                 num_vertices=self.num_vertices,
                 dirigido=dirigido,
             )
-            self.ultimo_mensaje = f"Modo manual activado con {self.num_vertices} vértices. Agrega aristas."
+            tipo_txt = "dirigido" if dirigido else "no dirigido"
+            self.ultimo_mensaje = f"Modo manual ({tipo_txt}) activado con {self.num_vertices} vértices. Agrega aristas."
 
         self.actualizar_algoritmo(paso_inicial=0)
         self.paso_actual = 0
@@ -99,23 +150,49 @@ class GrafoOrquestador:
         if not self.grafo_Service or not self.grafo_Service.get_grafo() or not self.algoritmo_seleccionado:
             return
 
+        es_dir = self.es_dirigido()
+
         if self.algoritmo_seleccionado == "DFS":
             algoritmo_obj = DFS()
             self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
             self.grafo_Service.ejecutar_algoritmo()
             self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
-            self.componentes_conexas = [componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()]
+            if es_dir:
+                self.componentes_debilmente_conexas = [
+                    componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
+                ]
+                self.componentes_fuertemente_conexas = [
+                    componente.copy() for componente in self.grafo_Service.obtener_componentes_fuertemente_conexas()
+                ]
+                if self.fuertemente and self.componentes_fuertemente_conexas:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_fuertemente_conexas]
+                else:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_debilmente_conexas]
+            else:
+                self.componentes_conexas = [
+                    componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
+                ]
+                self.componentes_debilmente_conexas = []
+                self.componentes_fuertemente_conexas = []
             self.pasos = list(self.pasos_algoritmo)
         elif self.algoritmo_seleccionado == "BFS":
             algoritmo_obj = BFS()
             self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
             self.grafo_Service.ejecutar_algoritmo()
             self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
-            self.componentes_conexas = [componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()]
+            self.componentes_conexas = [
+                componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
+            ]
+            self.componentes_debilmente_conexas = (
+                [c.copy() for c in self.componentes_conexas] if es_dir else []
+            )
+            self.componentes_fuertemente_conexas = []
             self.pasos = list(self.pasos_algoritmo)
         else:
             self.pasos_algoritmo = []
             self.componentes_conexas = []
+            self.componentes_debilmente_conexas = []
+            self.componentes_fuertemente_conexas = []
             self.pasos = [
                 f"Grafo con {len(self.grafo_Service.get_vertices())} vértices y {len(self.grafo_Service.get_aristas())} aristas.",
                 f"Algoritmo: {self.algoritmo_seleccionado}.",
@@ -152,20 +229,22 @@ class GrafoOrquestador:
         if self.existe_conexion(u, v):
             etiqueta_orig = self.obtener_etiqueta_vertice(u)
             etiqueta_dest = self.obtener_etiqueta_vertice(v)
-            return False, f"La conexión entre {etiqueta_orig} y {etiqueta_dest} ya existe."
+            simbolo = "→" if (dirigida or self.es_dirigido()) else "↔"
+            return False, f"La conexión {etiqueta_orig} {simbolo} {etiqueta_dest} ya existe."
 
+        es_dirigida = dirigida or self.es_dirigido()
         nueva_arista = Arista(
             origen=u,
             destino=v,
             peso=peso,
-            dirigida=dirigida,
+            dirigida=es_dirigida,
         )
         self.grafo_Service.get_grafo().agregar_arista(nueva_arista)
         self.actualizar_algoritmo()
 
         etiqueta_orig = self.obtener_etiqueta_vertice(u)
         etiqueta_dest = self.obtener_etiqueta_vertice(v)
-        simbolo = "→" if (dirigida or self.grafo_Service.get_grafo().dirigido) else "↔"
+        simbolo = "→" if es_dirigida else "↔"
         msg = f"Conexión agregada: {etiqueta_orig} {simbolo} {etiqueta_dest}"
 
         self.ultimo_mensaje = msg
@@ -207,7 +286,8 @@ class GrafoOrquestador:
         self.actualizar_algoritmo()
         etiqueta_orig = self.obtener_etiqueta_vertice(u)
         etiqueta_dest = self.obtener_etiqueta_vertice(v)
-        msg = f"Conexión cancelada: {etiqueta_orig} ↔ {etiqueta_dest} eliminada."
+        simbolo = "→" if es_dirigido else "↔"
+        msg = f"Conexión cancelada: {etiqueta_orig} {simbolo} {etiqueta_dest} eliminada."
         self.ultimo_mensaje = msg
         return True, msg
 
@@ -256,5 +336,14 @@ class GrafoOrquestador:
     def obtener_componentes_conexas(self) -> list[list[str]]:
         return [componente.copy() for componente in self.componentes_conexas]
 
-    def es_conexo(self) -> bool:
-        return len(self.componentes_conexas) == 1
+    def obtener_componentes_debilmente_conexas(self) -> list[list[str]]:
+        return [componente.copy() for componente in self.componentes_debilmente_conexas]
+
+    def obtener_componentes_fuertemente_conexas(self) -> list[list[str]]:
+        return [componente.copy() for componente in self.componentes_fuertemente_conexas]
+
+    def es_conexo(self, fuertemente: bool | None = None) -> bool:
+        if not self.grafo_Service:
+            return False
+        usar_fuerte = self.fuertemente if fuertemente is None else fuertemente
+        return self.grafo_Service.es_conexo(fuertemente=usar_fuerte)
