@@ -69,6 +69,20 @@ class grafoService:
                 return obtener_componentes(self.grafoRepository)
         return []
 
+    def obtener_bloques_diagonales(self) -> list:
+        """Expone los bloques diagonales identificados por algoritmos basados en matrices (e.g. Harary)."""
+        if self.algoritmo_conectividad_grafo is not None:
+            return getattr(self.algoritmo_conectividad_grafo, "bloques_diagonales", [])
+        return []
+
+    def obtener_matriz_final(self) -> list[list[int]]:
+        """Retorna la matriz final permutada si el algoritmo la genera, o la de adyacencia por defecto."""
+        if self.algoritmo_conectividad_grafo is not None and hasattr(self.algoritmo_conectividad_grafo, "matriz_final"):
+            matriz_final = getattr(self.algoritmo_conectividad_grafo, "matriz_final", [])
+            if matriz_final:
+                return [list(r) for r in matriz_final]
+        return self.get_matriz()
+
     def es_conexo(self, fuertemente: bool = False) -> bool:
         if self.algoritmo_conectividad_grafo is not None:
             # BFS conserva su contrato actual; esta opción solo se usa con algoritmos

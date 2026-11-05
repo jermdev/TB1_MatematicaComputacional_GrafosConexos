@@ -1,9 +1,11 @@
 import uuid
 from domain.algorithms.dfs import DFS
 from domain.algorithms.bfs import BFS
+from domain.algorithms.harary import Harary
 from domain.Entidades.arista import Arista
 from domain.Entidades.grafo import Grafo
 from service.grafo_service import grafoService
+from service.harary_service import HararyService
 from domain.Entidades.vertice import Vertice
 from service.generador_grafo_service import (
     crear_grafo_ejemplo,
@@ -188,6 +190,19 @@ class GrafoOrquestador:
             )
             self.componentes_fuertemente_conexas = []
             self.pasos = list(self.pasos_algoritmo)
+        elif self.algoritmo_seleccionado == "Harary":
+            algoritmo_obj = Harary()
+            self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
+            self.grafo_Service.ejecutar_algoritmo()
+            self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
+            self.componentes_conexas = [
+                componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
+            ]
+            self.componentes_debilmente_conexas = (
+                [c.copy() for c in self.componentes_conexas] if es_dir else []
+            )
+            self.componentes_fuertemente_conexas = []
+            self.pasos = list(self.pasos_algoritmo)
         else:
             self.pasos_algoritmo = []
             self.componentes_conexas = []
@@ -347,3 +362,8 @@ class GrafoOrquestador:
             return False
         usar_fuerte = self.fuertemente if fuertemente is None else fuertemente
         return self.grafo_Service.es_conexo(fuertemente=usar_fuerte)
+
+    def obtener_harary_service(self) -> HararyService:
+        """Instancia y retorna un HararyService vinculado al grafo actual."""
+        grafo = self.grafo_Service.get_grafo() if self.grafo_Service else None
+        return HararyService(grafo)
