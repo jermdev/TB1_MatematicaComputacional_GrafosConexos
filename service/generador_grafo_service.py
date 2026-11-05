@@ -78,4 +78,3 @@ def generar_grafo_aleatorio(num_vertices: int, probabilidad: float = 0.35, dirig
                     aristas_agregadas += 1
 
     return grafo_Service
-
