@@ -19,3 +19,13 @@ class Paso_Algoritmo:
     visitados: set = field(default_factory=set)
     mensaje : str = ""
     vecinos_analizados: list[str] = field(default_factory=list)
+
+    def __str__(self) -> str:
+        if self.mensaje:
+            return self.mensaje
+        if self.nodo_actual is not None:
+            return f"Paso {self.numero}: nodo {self.nodo_actual}"
+        return f"Paso {self.numero}"
+
+    def __repr__(self) -> str:
+        return self.__str__()

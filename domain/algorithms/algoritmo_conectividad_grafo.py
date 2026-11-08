@@ -6,7 +6,7 @@ class AlgoritmoConectividadGrafo(ABC):
         self._paso_a_paso = paso_a_paso
 
     @abstractmethod
-    def es_conexo(self, grafo):
+    def es_conexo(self, grafo, fuertemente: bool = None):
         pass
 
     def set_paso_a_paso(self, paso_a_paso: bool):
