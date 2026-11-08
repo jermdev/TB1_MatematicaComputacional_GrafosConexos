@@ -1,10 +1,11 @@
+from typing import Callable
 import streamlit as st
 from domain.Entidades.paso_algoritmo import Paso_Algoritmo
 
 
 def _formatear_lista_componentes(
     componentes: list[list[str]],
-    obtener_etiqueta: callable | None = None,
+    obtener_etiqueta: Callable | None = None,
     prefijo_item: str = "Componente",
 ):
     for idx, comp in enumerate(componentes, start=1):
@@ -19,7 +20,7 @@ def progreso_pasos(
     pasos: list,
     paso_actual: int,
     componentes_conexas: list[list[str]] | None = None,
-    obtener_etiqueta: callable | None = None,
+    obtener_etiqueta: Callable | None = None,
     dirigido: bool = False,
     fuertemente: bool = True,
     componentes_fuertemente_conexas: list[list[str]] | None = None,
@@ -35,8 +36,15 @@ def progreso_pasos(
             st.info("No hay pasos registrados para el grafo actual.")
         else:
             for i, paso in enumerate(pasos):
-                mensaje = paso.mensaje if isinstance(paso, Paso_Algoritmo) else str(paso)
+                # Extraer el mensaje dependiendo del tipo de paso
+                if hasattr(paso, "mensaje"):  # Cubre Paso_Algoritmo y PasoHarary
+                    mensaje = paso.mensaje
+                else:
+                    mensaje = str(paso)
+                
                 prefijo = f"**Paso {i + 1}:** "
+                
+                # Mostrar el paso actual destacado y los demás normales
                 if i == paso_actual:
                     st.info(f"{prefijo}{mensaje}")
                 else:

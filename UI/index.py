@@ -4,6 +4,13 @@ from UI.components.grafo_canva import grafo_canva
 from UI.components.progreso_pasos import progreso_pasos
 from service.grafo_orquestador import GrafoOrquestador
 
+def main():
+    # Inicializamos el orquestador y lo guardamos en la memoria de la sesión
+    if 'orquestador' not in st.session_state:
+        st.session_state.orquestador = GrafoOrquestador()
+
+    # Le pasamos el orquestador a la función render de la interfaz
+    render()
 
 def paso_atras():
     if "orquestador" in st.session_state:
@@ -155,4 +162,5 @@ def render():
             componentes_conexas=getattr(orquestador, "componentes_conexas", []),
             grafo_id=getattr(orquestador, "grafo_id", "default"),
             fuertemente=getattr(orquestador, "fuertemente", True),
+	    orquestador=orquestador
         )

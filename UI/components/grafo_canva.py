@@ -6,14 +6,15 @@ from domain.Entidades.grafo import Grafo
 
 
 def grafo_canva(
-    grafo: Grafo,
-    vista: str = "grafo",
-    modo_manual: bool = False,
-    paso_actual: int | None = None,
-    pasos_algoritmo: list | None = None,
-    componentes_conexas: list[list[str]] | None = None,
-    grafo_id: str = "default",
-    fuertemente: bool = True,
+    grafo, 
+    vista: str = "grafo", 
+    modo_manual: bool = False, 
+    paso_actual=0, 
+    pasos_algoritmo=None, 
+    componentes_conexas=None, 
+    grafo_id="default", 
+    fuertemente=True,
+    orquestador=None
 ):
     """
     Renderiza la visualización del grafo o su matriz de adyacencia según la vista elegida.
@@ -53,15 +54,38 @@ def grafo_canva(
                 mostrar_matriz(grafo)
 
 
-def mostrar_matriz(grafo: Grafo):
+def mostrar_matriz(grafo: Grafo, orquestador=None):
     """
-    Renderiza la matriz de adyacencia con información y métricas del grafo.
+    Renderiza la matriz del grafo. Si el algoritmo seleccionado es Harary,
+    muestra la matriz correspondiente al paso actual (caminos, permutaciones, etc.).
     """
-    matriz = grafo.get_matriz()
-    vertices = grafo.vertices
-    etiquetas = [f"{v.etiqueta or v.id} ({v.id})" for v in vertices]
+    matriz = []
+    etiquetas_filas = []
+    etiquetas_columnas = []
+    
+    # 1. Verificar si estamos usando Harary y si hay un orquestador activo
+    if orquestador and orquestador.algoritmo_seleccionado == "Harary":
+        harary_srv = orquestador.obtener_harary_service()
+        paso = harary_srv.obtener_paso(orquestador.paso_actual)
+        
+        if paso and hasattr(paso, 'matriz') and paso.matriz:
+            matriz = paso.matriz
+            etiquetas_filas = paso.etiquetas_filas
+            etiquetas_columnas = paso.etiquetas_columnas
+            st.markdown(f"##### 🔢 {paso.titulo}")
+            st.caption(paso.descripcion)
 
-    num_v = len(vertices)
+    # 2. Si no es Harary (o falló), usar la matriz de adyacencia clásica
+    if not matriz:
+        matriz = grafo.get_matriz()
+        vertices = grafo.vertices
+        etiquetas = [f"{v.etiqueta or v.id} ({v.id})" for v in vertices]
+        etiquetas_filas = etiquetas
+        etiquetas_columnas = etiquetas
+        st.markdown("##### 🔢 Matriz de Adyacencia")
+
+    # Mapear métricas generales
+    num_v = len(grafo.vertices)
     num_e = len(grafo.aristas)
     tipo_str = "Dirigido" if grafo.dirigido else "No dirigido"
 
@@ -70,8 +94,8 @@ def mostrar_matriz(grafo: Grafo):
     m2.metric("Aristas (|E|)", num_e)
     m3.metric("Tipo", tipo_str)
 
-    st.markdown("##### 🔢 Matriz de Adyacencia")
-    df = pd.DataFrame(matriz, index=etiquetas, columns=etiquetas)
+    # Renderizar el DataFrame
+    df = pd.DataFrame(matriz, index=etiquetas_filas, columns=etiquetas_columnas)
     st.dataframe(df, use_container_width=True, height=400)
 
 
