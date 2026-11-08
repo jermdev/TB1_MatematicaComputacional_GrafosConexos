@@ -15,12 +15,12 @@ def main():
 def paso_atras():
     if "orquestador" in st.session_state:
         st.session_state["orquestador"].paso_atras()
-
+        st.rerun()
 
 def paso_adelante():
     if "orquestador" in st.session_state:
         st.session_state["orquestador"].paso_adelante()
-
+        st.rerun()
 
 def render():
     st.set_page_config(

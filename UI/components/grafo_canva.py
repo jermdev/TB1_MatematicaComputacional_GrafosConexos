@@ -25,55 +25,43 @@ def grafo_canva(
             return
 
         if vista == "matriz":
-            mostrar_matriz(grafo)
+            mostrar_matriz(grafo, orquestador=orquestador)
         elif vista == "grafo":
-            mostrar_grafo(
-                grafo,
-                modo_manual=modo_manual,
-                paso_actual=paso_actual,
-                pasos_algoritmo=pasos_algoritmo or [],
-                componentes_conexas=componentes_conexas or [],
-                grafo_id=grafo_id,
-                fuertemente=fuertemente,
-            )
+            mostrar_grafo(grafo, modo_manual=modo_manual)
         elif vista == "ambos":
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**Representación visual**")
-                mostrar_grafo(
-                    grafo,
-                    modo_manual=modo_manual,
-                    paso_actual=paso_actual,
-                    pasos_algoritmo=pasos_algoritmo or [],
-                    componentes_conexas=componentes_conexas or [],
-                    grafo_id=grafo_id,
-                    fuertemente=fuertemente,
-                )
+                mostrar_grafo(grafo, modo_manual=modo_manual)
             with c2:
                 st.markdown("**Matriz de adyacencia**")
-                mostrar_matriz(grafo)
+                mostrar_matriz(grafo, orquestador=orquestador)
 
 
-def mostrar_matriz(grafo: Grafo, orquestador=None):
+def mostrar_matriz(grafo, orquestador=None):
     """
     Renderiza la matriz del grafo. Si el algoritmo seleccionado es Harary,
-    muestra la matriz correspondiente al paso actual (caminos, permutaciones, etc.).
+    muestra la matriz correspondiente al paso actual.
     """
     matriz = []
     etiquetas_filas = []
     etiquetas_columnas = []
+    titulo = "Matriz de Adyacencia"
+    descripcion = ""
     
-    # 1. Verificar si estamos usando Harary y si hay un orquestador activo
+    # 1. Extraer la matriz directamente de los pasos guardados en el orquestador
     if orquestador and orquestador.algoritmo_seleccionado == "Harary":
-        harary_srv = orquestador.obtener_harary_service()
-        paso = harary_srv.obtener_paso(orquestador.paso_actual)
-        
-        if paso and hasattr(paso, 'matriz') and paso.matriz:
-            matriz = paso.matriz
-            etiquetas_filas = paso.etiquetas_filas
-            etiquetas_columnas = paso.etiquetas_columnas
-            st.markdown(f"##### 🔢 {paso.titulo}")
-            st.caption(paso.descripcion)
+        if hasattr(orquestador, "pasos") and len(orquestador.pasos) > 0:
+            # Protegemos el índice para evitar desbordamientos
+            indice = min(orquestador.paso_actual, len(orquestador.pasos) - 1)
+            paso = orquestador.pasos[indice]
+            
+            if hasattr(paso, 'matriz') and paso.matriz:
+                matriz = paso.matriz
+                etiquetas_filas = getattr(paso, 'etiquetas_filas', [])
+                etiquetas_columnas = getattr(paso, 'etiquetas_columnas', [])
+                titulo = getattr(paso, 'titulo', "Matriz del algoritmo")
+                descripcion = getattr(paso, 'descripcion', "")
 
     # 2. Si no es Harary (o falló), usar la matriz de adyacencia clásica
     if not matriz:
@@ -82,12 +70,15 @@ def mostrar_matriz(grafo: Grafo, orquestador=None):
         etiquetas = [f"{v.etiqueta or v.id} ({v.id})" for v in vertices]
         etiquetas_filas = etiquetas
         etiquetas_columnas = etiquetas
-        st.markdown("##### 🔢 Matriz de Adyacencia")
 
     # Mapear métricas generales
     num_v = len(grafo.vertices)
     num_e = len(grafo.aristas)
     tipo_str = "Dirigido" if grafo.dirigido else "No dirigido"
+
+    st.markdown(f"##### 🔢 {titulo}")
+    if descripcion:
+        st.caption(descripcion)
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Vértices (|V|)", num_v)
@@ -97,7 +88,6 @@ def mostrar_matriz(grafo: Grafo, orquestador=None):
     # Renderizar el DataFrame
     df = pd.DataFrame(matriz, index=etiquetas_filas, columns=etiquetas_columnas)
     st.dataframe(df, use_container_width=True, height=400)
-
 
 def _definir_color_nodo(
     vertice_id: str,

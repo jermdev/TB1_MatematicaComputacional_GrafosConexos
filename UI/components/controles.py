@@ -59,7 +59,7 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
     with st.container(border=True):
         st.markdown("**Algoritmo de análisis**")
-        opciones_alg = ["DFS", "BFS"]
+        opciones_alg = ["DFS", "BFS", "Harary"]
         idx_alg = opciones_alg.index(algoritmo_default) if algoritmo_default in opciones_alg else 0
         algoritmo = st.selectbox(
             "Seleccionar algoritmo",
