@@ -34,7 +34,7 @@ class Harary(AlgoritmoConectividadGrafo):
         self.etiquetas_originales: list[str] = []
         self.etiquetas_ordenadas: list[str] = []
 
-    def ejecutar(self, grafo: Grafo, fuertemente: bool = False) -> list[list[int]]:
+    def ejecutar(self, grafo: Grafo, fuertemente: bool = True) -> list[list[int]]:
         """
         Ejecuta el Algoritmo de Harary sobre el grafo dado, generando la bitácora
         de pasos matriciales, los bloques cuadrados en la diagonal y las
@@ -89,13 +89,14 @@ class Harary(AlgoritmoConectividadGrafo):
         # -------------------------------------------------------------
         # PASO 2: Matriz de Caminos (Alcanzabilidad) y Conteo de Unos
         # -------------------------------------------------------------
-        # Para componentes conexas en grafos no dirigidos (o bidireccionales),
-        # usamos la relación simétrica de adyacencia.
         # Si el grafo es dirigido y fuertemente=True, evaluamos transitividad dirigida
-        # y luego intersección mutua (P and P^T).
-        es_dir = grafo.dirigido and fuertemente
-        if not grafo.dirigido or not fuertemente:
-            # Base no dirigida: existe camino si están conectados en cualquier sentido
+        # respetando la dirección de las aristas.
+        # Si fuertemente=False en un grafo dirigido, se evalúa conectividad débil.
+        # En grafos no dirigidos, la matriz de adyacencia ya es intrínsecamente simétrica.
+        if grafo.dirigido and fuertemente:
+            A_base = [list(fila) for fila in self.matriz_adyacencia]
+            tipo_eval = "dirigido (conectividad fuerte)"
+        elif grafo.dirigido and not fuertemente:
             A_base = [
                 [
                     1 if (self.matriz_adyacencia[i][j] == 1 or self.matriz_adyacencia[j][i] == 1) else 0
@@ -103,8 +104,10 @@ class Harary(AlgoritmoConectividadGrafo):
                 ]
                 for i in range(n)
             ]
+            tipo_eval = "dirigido evaluado como no dirigido (conectividad débil)"
         else:
             A_base = [list(fila) for fila in self.matriz_adyacencia]
+            tipo_eval = "no dirigido"
 
         # Clausura transitiva con diagonal reflexiva (algoritmo de Warshall)
         P = [
@@ -115,13 +118,6 @@ class Harary(AlgoritmoConectividadGrafo):
             for i in range(n):
                 for j in range(n):
                     P[i][j] = 1 if (P[i][j] == 1 or (P[i][k] == 1 and P[k][j] == 1)) else 0
-
-        if es_dir:
-            # Para componentes fuertemente conexas: alcanzabilidad mutua P[i][j] == 1 y P[j][i] == 1
-            P = [
-                [1 if (P[i][j] == 1 and P[j][i] == 1) else 0 for j in range(n)]
-                for i in range(n)
-            ]
 
         self.matriz_caminos = [list(fila) for fila in P]
         conteo_unos = [sum(P[i]) for i in range(n)]
@@ -135,11 +131,11 @@ class Harary(AlgoritmoConectividadGrafo):
             tipo=TipoPasoHarary.MATRIZ_CAMINOS,
             titulo="Matriz de Caminos (Alcanzabilidad)",
             descripcion=(
-                "Se calcula la matriz de caminos con diagonal reflexiva mediante "
-                "clausura transitiva. Para cada fila se contabiliza el número total de unos."
+                f"Se calcula la matriz de caminos con diagonal reflexiva mediante "
+                f"clausura transitiva ({tipo_eval}). Para cada fila se contabiliza el número total de unos."
             ),
             mensaje=(
-                f"Matriz de caminos calculada. Conteo de unos por fila: {detalle_unos}."
+                f"Matriz de caminos calculada ({tipo_eval}). Conteo de unos por fila: {detalle_unos}."
             ),
             matriz=[list(row) for row in self.matriz_caminos],
             etiquetas_filas=list(etiquetas_originales),
@@ -257,8 +253,19 @@ class Harary(AlgoritmoConectividadGrafo):
         idx = 0
         num_componente = 1
         while idx < n:
-            tamano = sum(M_final[idx])
-            tamano = max(1, min(tamano, n - idx))
+            # Encontrar el tamaño máximo del bloque cuadrado de unos a lo largo de la diagonal
+            tamano = 1
+            while idx + tamano < n:
+                siguiente_tam = tamano + 1
+                es_cuadrado = all(
+                    M_final[idx + r][idx + c] == 1
+                    for r in range(siguiente_tam)
+                    for c in range(siguiente_tam)
+                )
+                if es_cuadrado:
+                    tamano = siguiente_tam
+                else:
+                    break
 
             indices_bloque = [permutacion[k] for k in range(idx, idx + tamano)]
             verts_ids = [ids_originales[p] for p in indices_bloque]
@@ -311,11 +318,28 @@ class Harary(AlgoritmoConectividadGrafo):
         # PASO 6: Diagnóstico y Resumen Final
         # -------------------------------------------------------------
         es_conexo_grafo = (len(componentes) == 1)
-        estado_conexo = (
-            "CONEXO (1 componente conexa)"
-            if es_conexo_grafo
-            else f"DISCONEXO ({len(componentes)} componentes conexas)"
-        )
+        if grafo.dirigido:
+            if fuertemente:
+                tipo_con_nom = "fuertemente conexas"
+                estado_conexo = (
+                    "FUERTEMENTE CONEXO (1 componente fuertemente conexa)"
+                    if es_conexo_grafo
+                    else f"NO FUERTEMENTE CONEXO ({len(componentes)} componentes fuertemente conexas)"
+                )
+            else:
+                tipo_con_nom = "débilmente conexas"
+                estado_conexo = (
+                    "DÉBILMENTE CONEXO (1 componente débilmente conexa)"
+                    if es_conexo_grafo
+                    else f"DISCONEXO ({len(componentes)} componentes débilmente conexas)"
+                )
+        else:
+            tipo_con_nom = "conexas"
+            estado_conexo = (
+                "CONEXO (1 componente conexa)"
+                if es_conexo_grafo
+                else f"DISCONEXO ({len(componentes)} componentes conexas)"
+            )
 
         paso_6 = PasoHarary(
             numero=6,
@@ -327,7 +351,7 @@ class Harary(AlgoritmoConectividadGrafo):
             ),
             mensaje=(
                 f"Análisis completado: el grafo es {estado_conexo}. "
-                f"Total de componentes: {len(componentes)}."
+                f"Total de componentes {tipo_con_nom}: {len(componentes)}."
             ),
             matriz=[list(row) for row in self.matriz_final],
             etiquetas_filas=list(etiquetas_ordenadas),
@@ -340,13 +364,23 @@ class Harary(AlgoritmoConectividadGrafo):
 
         return [list(row) for row in self.matriz_final]
 
-    def encontrar_componentes_conexas(self, grafo: Grafo) -> list[list[str]]:
+    def encontrar_componentes_conexas(self, grafo: Grafo, fuertemente: bool = True) -> list[list[str]]:
         """Retorna las componentes conexas identificadas como listas de IDs de vértices."""
-        self.ejecutar(grafo)
+        self.ejecutar(grafo, fuertemente=fuertemente)
         return [componente.copy() for componente in self.componentes]
 
-    def es_conexo(self, grafo: Grafo) -> bool:
+    def encontrar_componentes_fuertemente_conexas(self, grafo: Grafo) -> list[list[str]]:
+        """Retorna las componentes fuertemente conexas de un grafo dirigido."""
+        self.ejecutar(grafo, fuertemente=True)
+        return [componente.copy() for componente in self.componentes]
+
+    def encontrar_componentes_debilmente_conexas(self, grafo: Grafo) -> list[list[str]]:
+        """Retorna las componentes débilmente conexas de un grafo dirigido."""
+        self.ejecutar(grafo, fuertemente=False)
+        return [componente.copy() for componente in self.componentes]
+
+    def es_conexo(self, grafo: Grafo, fuertemente: bool = True) -> bool:
         """Determina si el grafo tiene exactamente una componente conexa no vacía."""
-        self.ejecutar(grafo)
+        self.ejecutar(grafo, fuertemente=fuertemente)
         return len(self.componentes) == 1
 

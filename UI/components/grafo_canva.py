@@ -27,12 +27,28 @@ def grafo_canva(
         if vista == "matriz":
             mostrar_matriz(grafo, orquestador=orquestador)
         elif vista == "grafo":
-            mostrar_grafo(grafo, modo_manual=modo_manual)
+            mostrar_grafo(
+                grafo,
+                modo_manual=modo_manual,
+                paso_actual=paso_actual,
+                pasos_algoritmo=pasos_algoritmo,
+                componentes_conexas=componentes_conexas,
+                grafo_id=grafo_id,
+                fuertemente=fuertemente,
+            )
         elif vista == "ambos":
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**Representación visual**")
-                mostrar_grafo(grafo, modo_manual=modo_manual)
+                mostrar_grafo(
+                    grafo,
+                    modo_manual=modo_manual,
+                    paso_actual=paso_actual,
+                    pasos_algoritmo=pasos_algoritmo,
+                    componentes_conexas=componentes_conexas,
+                    grafo_id=grafo_id,
+                    fuertemente=fuertemente,
+                )
             with c2:
                 st.markdown("**Matriz de adyacencia**")
                 mostrar_matriz(grafo, orquestador=orquestador)
@@ -74,7 +90,11 @@ def mostrar_matriz(grafo, orquestador=None):
     # Mapear métricas generales
     num_v = len(grafo.vertices)
     num_e = len(grafo.aristas)
-    tipo_str = "Dirigido" if grafo.dirigido else "No dirigido"
+    if grafo.dirigido:
+        criterio = "Fuerte" if (orquestador and getattr(orquestador, "fuertemente", True)) else "Débil"
+        tipo_str = f"Dirigido ({criterio})"
+    else:
+        tipo_str = "No dirigido"
 
     st.markdown(f"##### 🔢 {titulo}")
     if descripcion:

@@ -82,10 +82,13 @@ class GrafoOrquestador:
         """Alterna entre visualización de componentes fuertemente conexas y débilmente conexas."""
         self.fuertemente = fuertemente
         if self.es_dirigido():
-            if self.fuertemente and self.componentes_fuertemente_conexas:
-                self.componentes_conexas = [c.copy() for c in self.componentes_fuertemente_conexas]
+            if self.algoritmo_seleccionado == "Harary":
+                self.actualizar_algoritmo(paso_inicial=self.paso_actual)
             else:
-                self.componentes_conexas = [c.copy() for c in self.componentes_debilmente_conexas]
+                if self.fuertemente and self.componentes_fuertemente_conexas:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_fuertemente_conexas]
+                else:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_debilmente_conexas]
 
     def generar_grafo(
         self,
@@ -193,15 +196,28 @@ class GrafoOrquestador:
         elif self.algoritmo_seleccionado == "Harary":
             algoritmo_obj = Harary()
             self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
-            self.grafo_Service.ejecutar_algoritmo()
+            if es_dir:
+                self.componentes_fuertemente_conexas = [
+                    componente.copy() for componente in self.grafo_Service.obtener_componentes_fuertemente_conexas()
+                ]
+                alg_debil = Harary()
+                alg_debil.ejecutar(self.grafo_Service.get_grafo(), fuertemente=False)
+                self.componentes_debilmente_conexas = [
+                    c.copy() for c in alg_debil.componentes
+                ]
+                self.grafo_Service.ejecutar_algoritmo(fuertemente=self.fuertemente)
+                if self.fuertemente and self.componentes_fuertemente_conexas:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_fuertemente_conexas]
+                else:
+                    self.componentes_conexas = [c.copy() for c in self.componentes_debilmente_conexas]
+            else:
+                self.grafo_Service.ejecutar_algoritmo(fuertemente=False)
+                self.componentes_conexas = [
+                    componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
+                ]
+                self.componentes_debilmente_conexas = []
+                self.componentes_fuertemente_conexas = []
             self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
-            self.componentes_conexas = [
-                componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
-            ]
-            self.componentes_debilmente_conexas = (
-                [c.copy() for c in self.componentes_conexas] if es_dir else []
-            )
-            self.componentes_fuertemente_conexas = []
             self.pasos = list(self.pasos_algoritmo)
         else:
             self.pasos_algoritmo = []

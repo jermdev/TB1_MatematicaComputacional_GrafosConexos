@@ -42,8 +42,12 @@ class grafoService:
     def set_algoritmo_conectividad_grafo(self, algoritmo: AlgoritmoConectividadGrafo):
         self.algoritmo_conectividad_grafo = algoritmo
 
-    def ejecutar_algoritmo(self):
+    def ejecutar_algoritmo(self, fuertemente: bool = True):
         if self.algoritmo_conectividad_grafo is not None:
+            import inspect
+            sig = inspect.signature(self.algoritmo_conectividad_grafo.ejecutar)
+            if "fuertemente" in sig.parameters:
+                return self.algoritmo_conectividad_grafo.ejecutar(self.grafoRepository, fuertemente=fuertemente)
             return self.algoritmo_conectividad_grafo.ejecutar(self.grafoRepository)
         return []
 

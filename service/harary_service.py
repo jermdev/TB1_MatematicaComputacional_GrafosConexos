@@ -28,7 +28,7 @@ class HararyService:
         """Retorna el grafo actual asociado al servicio."""
         return self.grafo
 
-    def ejecutar(self, fuertemente: bool = False) -> Harary:
+    def ejecutar(self, fuertemente: bool = True) -> Harary:
         """
         Ejecuta el Algoritmo de Harary sobre el grafo actual y reinicia
         el índice de navegación al primer paso.

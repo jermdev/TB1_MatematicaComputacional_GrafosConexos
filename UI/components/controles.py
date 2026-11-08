@@ -70,7 +70,7 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
         fuertemente = fuertemente_default
         if dirigido:
-            if algoritmo == "DFS":
+            if algoritmo in ["DFS", "Harary"]:
                 opciones_con = [
                     "Fuertemente conexo",
                     "Débilmente conexo",
@@ -84,12 +84,12 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
                 )
                 fuertemente = (tipo_con == "Fuertemente conexo")
                 st.caption(
-                    "ℹ️ **(DFS)** identifica componentes fuertemente conexas; "
-                    "la conectividad débil evalúa el grafo subyacente ignorando la dirección."
+                    f"ℹ️ **({algoritmo})** en modo dirigido: 'Fuertemente conexo' analiza caminos directos en ambos sentidos; "
+                    "'Débilmente conexo' evalúa la conectividad ignorando la dirección de las aristas."
                 )
             else:
                 st.caption(
-                    "ℹ️ En grafos dirigidos, selecciona **DFS** para analizar "
+                    "ℹ️ En grafos dirigidos, selecciona **DFS** o **Harary** para analizar "
                     "**Componentes Fuertemente Conexas** y **Débilmente Conexas**."
                 )
 
