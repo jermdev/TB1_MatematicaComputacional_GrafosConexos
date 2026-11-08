@@ -57,27 +57,31 @@ def grafo_canva(
 def mostrar_matriz(grafo, orquestador=None):
     """
     Renderiza la matriz del grafo. Si el algoritmo seleccionado es Harary,
-    muestra la matriz correspondiente al paso actual.
+    muestra la matriz correspondiente al paso actual, el conteo de unos y
+    el resaltado de los bloques cuadrados diagonales.
     """
     matriz = []
     etiquetas_filas = []
     etiquetas_columnas = []
+    conteo_unos = []
+    bloques_diagonales = []
     titulo = "Matriz de Adyacencia"
     descripcion = ""
-    
-    # 1. Extraer la matriz directamente de los pasos guardados en el orquestador
+
+    # 1. Extraer la matriz directamente de los pasos guardados en el orquestador (Harary)
     if orquestador and orquestador.algoritmo_seleccionado == "Harary":
         if hasattr(orquestador, "pasos") and len(orquestador.pasos) > 0:
-            # Protegemos el índice para evitar desbordamientos
             indice = min(orquestador.paso_actual, len(orquestador.pasos) - 1)
             paso = orquestador.pasos[indice]
-            
-            if hasattr(paso, 'matriz') and paso.matriz:
+
+            if hasattr(paso, "matriz") and paso.matriz:
                 matriz = paso.matriz
-                etiquetas_filas = getattr(paso, 'etiquetas_filas', [])
-                etiquetas_columnas = getattr(paso, 'etiquetas_columnas', [])
-                titulo = getattr(paso, 'titulo', "Matriz del algoritmo")
-                descripcion = getattr(paso, 'descripcion', "")
+                etiquetas_filas = getattr(paso, "etiquetas_filas", [])
+                etiquetas_columnas = getattr(paso, "etiquetas_columnas", [])
+                conteo_unos = getattr(paso, "conteo_unos", [])
+                bloques_diagonales = getattr(paso, "bloques_diagonales", [])
+                titulo = getattr(paso, "titulo", "Matriz del algoritmo")
+                descripcion = getattr(paso, "descripcion", "")
 
     # 2. Si no es Harary (o falló), usar la matriz de adyacencia clásica
     if not matriz:
@@ -105,9 +109,42 @@ def mostrar_matriz(grafo, orquestador=None):
     m2.metric("Aristas (|E|)", num_e)
     m3.metric("Tipo", tipo_str)
 
-    # Renderizar el DataFrame
+    # Asegurar que las etiquetas sean únicas si hay duplicados
     df = pd.DataFrame(matriz, index=etiquetas_filas, columns=etiquetas_columnas)
-    st.dataframe(df, use_container_width=True, height=400)
+    if conteo_unos and len(conteo_unos) == len(df):
+        df["Σ Unos"] = conteo_unos
+
+    if bloques_diagonales:
+        colores_bloques = [
+            "background-color: #a7f3d0; color: #064e3b; font-weight: bold;",
+            "background-color: #bfdbfe; color: #1e3a8a; font-weight: bold;",
+            "background-color: #fde68a; color: #78350f; font-weight: bold;",
+            "background-color: #fbcfe8; color: #831843; font-weight: bold;",
+            "background-color: #c7d2fe; color: #312e81; font-weight: bold;",
+            "background-color: #fed7aa; color: #7c2d12; font-weight: bold;",
+        ]
+
+        def _colorear_bloques(_df):
+            estilos = pd.DataFrame("", index=_df.index, columns=_df.columns)
+            for idx_b, bloque in enumerate(bloques_diagonales):
+                estilo = colores_bloques[idx_b % len(colores_bloques)]
+                ini = getattr(bloque, "indice_inicio", 0)
+                fin = getattr(bloque, "indice_fin", 0)
+                for r in range(ini, min(fin + 1, len(_df.index))):
+                    for c in range(ini, min(fin + 1, len(etiquetas_columnas))):
+                        estilos.iat[r, c] = estilo
+            return estilos
+
+        st.dataframe(df.style.apply(_colorear_bloques, axis=None), use_container_width=True, height=340)
+
+        resumen_bloques = [
+            f"**Bloque {b.numero_componente}** ({b.tamano}×{b.tamano}): `{{{', '.join(b.vertices_etiquetas)}}}`"
+            for b in bloques_diagonales
+        ]
+        st.caption("📦 **Cuadrados diagonales identificados:** " + " · ".join(resumen_bloques))
+    else:
+        st.dataframe(df, use_container_width=True, height=380)
+
 
 def _definir_color_nodo(
     vertice_id: str,

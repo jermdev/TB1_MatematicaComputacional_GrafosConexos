@@ -157,8 +157,8 @@ class GrafoOrquestador:
 
         es_dir = self.es_dirigido()
 
-        if self.algoritmo_seleccionado == "DFS":
-            algoritmo_obj = DFS()
+        if self.algoritmo_seleccionado in ("DFS", "BFS"):
+            algoritmo_obj = DFS() if self.algoritmo_seleccionado == "DFS" else BFS()
             self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
             self.grafo_Service.ejecutar_algoritmo()
             self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
@@ -179,19 +179,6 @@ class GrafoOrquestador:
                 ]
                 self.componentes_debilmente_conexas = []
                 self.componentes_fuertemente_conexas = []
-            self.pasos = list(self.pasos_algoritmo)
-        elif self.algoritmo_seleccionado == "BFS":
-            algoritmo_obj = BFS()
-            self.grafo_Service.set_algoritmo_conectividad_grafo(algoritmo_obj)
-            self.grafo_Service.ejecutar_algoritmo()
-            self.pasos_algoritmo = self.grafo_Service.obtener_pasos()
-            self.componentes_conexas = [
-                componente.copy() for componente in self.grafo_Service.obtener_componentes_conexas()
-            ]
-            self.componentes_debilmente_conexas = (
-                [c.copy() for c in self.componentes_conexas] if es_dir else []
-            )
-            self.componentes_fuertemente_conexas = []
             self.pasos = list(self.pasos_algoritmo)
         elif self.algoritmo_seleccionado == "Harary":
             algoritmo_obj = Harary()

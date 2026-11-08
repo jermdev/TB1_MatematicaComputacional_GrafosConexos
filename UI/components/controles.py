@@ -70,28 +70,22 @@ def render_controles(orquestador: GrafoOrquestador=None , paso_atras: callable =
 
         fuertemente = fuertemente_default
         if dirigido:
-            if algoritmo in ["DFS", "Harary"]:
-                opciones_con = [
-                    "Fuertemente conexo",
-                    "Débilmente conexo",
-                ]
-                tipo_con = st.radio(
-                    "Criterio de conectividad (Dirigido)",
-                    opciones_con,
-                    index=0 if fuertemente_default else 1,
-                    key="radio_conectividad_dirigido",
-                    help="Define qué componentes resaltar en el grafo al finalizar el recorrido.",
-                )
-                fuertemente = (tipo_con == "Fuertemente conexo")
-                st.caption(
-                    f"ℹ️ **({algoritmo})** en modo dirigido: 'Fuertemente conexo' analiza caminos directos en ambos sentidos; "
-                    "'Débilmente conexo' evalúa la conectividad ignorando la dirección de las aristas."
-                )
-            else:
-                st.caption(
-                    "ℹ️ En grafos dirigidos, selecciona **DFS** o **Harary** para analizar "
-                    "**Componentes Fuertemente Conexas** y **Débilmente Conexas**."
-                )
+            opciones_con = [
+                "Fuertemente conexo",
+                "Débilmente conexo",
+            ]
+            tipo_con = st.radio(
+                "Criterio de conectividad (Dirigido)",
+                opciones_con,
+                index=0 if fuertemente_default else 1,
+                key="radio_conectividad_dirigido",
+                help="Define qué componentes resaltar en el grafo o matriz al finalizar el recorrido.",
+            )
+            fuertemente = (tipo_con == "Fuertemente conexo")
+            st.caption(
+                f"ℹ️ **({algoritmo})** en modo dirigido: 'Fuertemente conexo' analiza mutua alcanzabilidad siguiendo la dirección; "
+                "'Débilmente conexo' evalúa el grafo ignorando el sentido de las aristas."
+            )
 
     with st.container(border=True):
         generar = st.button("🚀 Generar grafo", use_container_width=True, type="primary", key="btn_generar_grafo")

@@ -28,7 +28,7 @@ def progreso_pasos(
 ):
     """
     Renderiza el progreso de los pasos en la interfaz de usuario y el desglose de componentes conexas
-    (incluyendo conectividad fuerte con Kosaraju y conectividad débil para grafos dirigidos).
+    (incluyendo conectividad fuerte y conectividad débil para grafos dirigidos en DFS, BFS y Harary).
     """
     st.subheader("Paso a paso")
     with st.container(height=600, border=True):
@@ -36,14 +36,18 @@ def progreso_pasos(
             st.info("No hay pasos registrados para el grafo actual.")
         else:
             for i, paso in enumerate(pasos):
-                # Extraer el mensaje dependiendo del tipo de paso
-                if hasattr(paso, "mensaje"):  # Cubre Paso_Algoritmo y PasoHarary
+                # Extraer título y mensaje dependiendo del tipo de paso (Paso_Algoritmo o PasoHarary)
+                titulo_fase = getattr(paso, "titulo", "")
+                if hasattr(paso, "mensaje"):
                     mensaje = paso.mensaje
                 else:
                     mensaje = str(paso)
-                
-                prefijo = f"**Paso {i + 1}:** "
-                
+
+                if titulo_fase:
+                    prefijo = f"**Paso {i + 1} ({titulo_fase}):** "
+                else:
+                    prefijo = f"**Paso {i + 1}:** "
+
                 # Mostrar el paso actual destacado y los demás normales
                 if i == paso_actual:
                     st.info(f"{prefijo}{mensaje}")
@@ -97,9 +101,4 @@ def progreso_pasos(
                         "C. Débil",
                     )
             elif componentes_conexas:
-                st.info(
-                    "ℹ️ Mostrando recorrido en anchura (BFS). "
-                    "Selecciona **DFS** para calcular **Componentes Fuertemente Conexas** y **Débilmente Conexas**."
-                )
-                st.markdown("** Subgrafos alcanzados (BFS):**")
-                _formatear_lista_componentes(componentes_conexas, obtener_etiqueta, "Grupo")
+                _formatear_lista_componentes(componentes_conexas, obtener_etiqueta, "Componente")
